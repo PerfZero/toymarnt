@@ -14,7 +14,9 @@ const getProductsByType = async (id) => {
 };
 const getProductsById = async (id) => {
   try {
-    const req = await fetch("https://api.toymarket.site/api/products?id=" + id);
+    const req = await fetch(
+      "https://api.toymarket.site/api/products?model_by_product_id=" + id
+    );
     const res = await req.json();
 
     return res.data;
