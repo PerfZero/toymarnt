@@ -12,6 +12,19 @@ const getProductsByType = async (id) => {
 
   return res.data;
 };
+const getProductsById = async (id) => {
+  try {
+    const req = await fetch("https://api.toymarket.site/api/products?id=" + id);
+    const res = await req.json();
+
+    return res.data;
+  } catch (err) {
+    if (err.status == 401) {
+      localStorage.removeItem("user");
+      window.location.href = "/auth";
+    }
+  }
+};
 const getProductsByTypeWithLimit = async (id, limit) => {
   const req = await fetch(
     "https://api.toymarket.site/api/products?category=" +
@@ -141,6 +154,7 @@ export {
   getSingleProduct,
   getCategories,
   getProductsByType,
+  getProductsById,
   getProductsByTypeWithLimit,
   getNewProducts,
   getProductsBySearch,
