@@ -158,6 +158,8 @@ function OrderInfo() {
                 ? "greenStatsus status"
                 : singleOrder?.statusName === "Отменен"
                 ? "redStatsus status"
+                : singleOrder?.statusName === "Истек"
+                ? "orangeStatus"
                 : "status"
             }
           >

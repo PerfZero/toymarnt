@@ -57,6 +57,10 @@
       .redStatsus {
         background: rgb(253, 57, 121);
       }
+
+      .orangeStatus {
+        background: rgb(255 109 0);
+      }
     }
 
     .order_address {

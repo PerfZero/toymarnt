@@ -65,6 +65,8 @@ function Order() {
                       ? "greenStatsus"
                       : order?.statusName === "Отменен"
                       ? "redStatsus"
+                      : order?.statusName === "Истек"
+                      ? "orangeStatus"
                       : ""
                   }
                 >
