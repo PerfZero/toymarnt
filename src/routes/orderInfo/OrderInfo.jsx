@@ -166,8 +166,10 @@ function OrderInfo() {
         </div>
         <div className="order_address">
           <p>{customDate(singleOrder?.orderDate)}</p>
-          Самовывоз по адресу: 295034, Республика Крым, г. Симферополь, ул.
-          Ленина, д 120
+          {singleOrder.deliveryMethod == "Самовывоз"
+            ? "Самовывоз по адресу"
+            : "Доставка курьером на адрес"}{" "}
+          : {singleOrder?.address}
         </div>
 
         <div className="right_top">
