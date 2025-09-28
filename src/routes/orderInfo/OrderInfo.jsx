@@ -19,6 +19,7 @@ import { useGoBackOrHome } from "../../utils/goBackOrHome";
 
 function OrderInfo() {
   const nav = useNavigate();
+  const back = useGoBackOrHome();
   const dispatch = useDispatch();
   let { id } = useParams();
   let userInfo = useSelector((state) => state.cart.userInfo);
@@ -26,7 +27,7 @@ function OrderInfo() {
     userInfo?.orders?.find((order) => +order.orderId === +id) || {};
   let singleOrder_products = singleOrder?.products || [];
 
-  console.log(singleOrder_products);
+  console.log(singleOrder.code);
 
   const [qrUrl, setQrUrl] = React.useState("");
 
@@ -36,7 +37,7 @@ function OrderInfo() {
     const fetchQrCode = async () => {
       try {
         const response = await fetch(
-          `https://api.toymarket.site/api/img/qrcode/${singleOrder.orderId}`
+          `https://api.toymarket.site/api/img/qrcode/${singleOrder.code}`
         );
         setQrUrl(response.url);
       } catch (error) {
@@ -72,12 +73,6 @@ function OrderInfo() {
   const getDisplayQuantity = (inCart, product) => {
     if (!inCart || !product) return 0;
 
-    // const boxQuantity = Number(inCart.quantity) * Number(product.inBox);
-    // const packageSize = Number(product.inPackage);
-    // return packageSize && boxQuantity % packageSize !== 0
-    //   ? Math.ceil(boxQuantity)
-    //   : Math.floor(boxQuantity);
-
     return inCart.quantity;
   };
 
@@ -92,29 +87,30 @@ function OrderInfo() {
     }
     return Number(product.price); // Asl narx
   };
-  // Umumiy chegirmani hisoblash
-  let totalSavings = singleOrder_products?.reduce((acc, product) => {
-    const displayQuantity = getDisplayQuantity(product);
+
+  const totalSavings = singleOrder_products?.reduce((acc, product) => {
+    const qty = product.quantity;
+
     if (
       product.discountedPrice &&
-      displayQuantity >= (+product.recomendedMinimalSize || Infinity)
+      product.price &&
+      qty >= (+product.recomendedMinimalSize || Infinity)
     ) {
-      // Faqat chegirma ishlaydigan mahsulotlar uchun
       const saving =
-        (Number(product.price) - Number(product.discountedPrice)) *
-        displayQuantity;
+        (Number(product?.price) - Number(product?.discountedPrice)) * qty;
       return acc + saving;
     }
     return acc;
   }, 0);
 
   const totalPrice = singleOrder_products?.reduce((acc, product) => {
-    const displayQuantity = getDisplayQuantity(product);
-    const currentPrice = getCurrentPrice(product);
+    const displayQuantity = product.quantity;
+    const currentPrice = Number(product.price || product.discountedPrice);
 
     acc += displayQuantity * currentPrice;
     return acc;
   }, 0);
+
   const ReOrder = async () => {
     try {
       const promises = singleOrder_products.map((product) =>
@@ -135,9 +131,6 @@ function OrderInfo() {
       console.error("Xatolik yuz berdi:", error);
     }
   };
-
-  const back = useGoBackOrHome();
-
   return (
     <div className="container cardInfo">
       <div className="left-card-block">
@@ -201,13 +194,13 @@ function OrderInfo() {
             className="copy_article"
             onClick={() => {
               toast.success("Скопировано");
-              navigator.clipboard.writeText(singleOrder.orderId);
+              navigator.clipboard.writeText(singleOrder.code);
             }}
           >
-            <IoCopyOutline /> {singleOrder.orderId}
+            <IoCopyOutline /> {singleOrder.code}
           </p>
           <div className="qr_box">
-            <img src="" alt="" />
+            <img src={qrUrl} alt="" />
           </div>
           <p>Сообщите этот код сотруднику пункта выдачи заказа.</p>
         </div>
@@ -279,11 +272,11 @@ function OrderInfo() {
           </div>
           <div className="qty_price">
             <span>Товары, {totalCount} шт.</span>
-            <span>{formatNumber(totalPrice)} ₽</span>
+            <span> ₽</span>
           </div>
           <div className="qty_price">
             <span>Экономия</span>
-            <span>{formatNumber(totalSavings)} ₽</span>
+            <span> ₽</span>
           </div>
           <div className="paid">
             <h1>Оплачено:</h1>
@@ -298,10 +291,10 @@ function OrderInfo() {
             className="copy_article"
             onClick={() => {
               toast.success("Скопировано");
-              navigator.clipboard.writeText(singleOrder.orderId);
+              navigator.clipboard.writeText(singleOrder.code);
             }}
           >
-            <IoCopyOutline /> {singleOrder.orderId}
+            <IoCopyOutline /> {singleOrder.code}
           </p>
           <div className="qr_box">
             <img src={qrUrl} alt="" />

@@ -11,7 +11,7 @@ function Order() {
   const nav = useNavigate();
   let userInfo = useSelector((state) => state.cart.userInfo);
   let ordersStory = userInfo?.orders;
-  console.log(userInfo);
+  const back = useGoBackOrHome();
 
   const customDate = (orderDate) => {
     let date = new Date(orderDate * 1000).toLocaleDateString("ru-RU", {
@@ -27,8 +27,6 @@ function Order() {
 
     return `${date} ${hour}`;
   };
-
-  const back = useGoBackOrHome();
 
   return (
     <div className="container orders">
@@ -73,10 +71,7 @@ function Order() {
                   {order?.statusName}
                 </p>
               </div>
-              <div className="order_address">
-                Самовывоз по адресу: 295034, Республика Крым, г. Симферополь,
-                ул. Ленина, д 120
-              </div>
+              <div className="order_address">{order?.address}</div>
               <span className="dateLabel">
                 Кол-во товаров: {order?.products?.length}{" "}
               </span>
