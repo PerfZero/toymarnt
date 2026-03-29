@@ -436,6 +436,8 @@ function Catalog() {
       </div>
     );
 
+  console.log(catalogs[0]);
+
   return (
     <div className="catalog container">
       {catalogs?.map(
@@ -486,7 +488,15 @@ function Catalog() {
                             {+product?.discountedPrice !== +product?.price &&
                             +product?.price &&
                             +product?.discountedPrice ? (
-                              <div className="mark_discount">%</div>
+                              <div className="mark_discount">
+                                -
+                                {Math.round(
+                                  ((+product.price - +product.discountedPrice) /
+                                    +product.price) *
+                                    100
+                                )}
+                                %
+                              </div>
                             ) : null}
                             <img
                               src={`https://api.toymarket.site/api/image/${product.id}/${product.image}`}
@@ -559,7 +569,7 @@ function Catalog() {
                                 }
                               >
                                 {formatNumber(
-                                  +product.price || +product.discountedPrice
+                                  +product.discountedPrice || +product.price
                                 )}{" "}
                                 ₽
                               </div>
@@ -588,7 +598,7 @@ function Catalog() {
                               }
                             >
                               {formatNumber(
-                                +product.price || +product.discountedPrice
+                                +product.discountedPrice || +product.price
                               )}{" "}
                               ₽
                             </div>

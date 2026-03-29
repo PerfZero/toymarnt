@@ -76,8 +76,8 @@
   width: 180px;
   min-width: 180px;
   max-width: 180px;
-  height: 360px;
-  max-height: 360px !important;
+  height: 380px;
+  max-height: 380px !important;
 }
 
 .product-img-link {
@@ -97,9 +97,10 @@
 }
 
 .mark_discount {
-  width: 24px;
+  width: fit-content;
   height: 24px;
   border-top-right-radius: 8px;
+  padding: 0 4px;
   border-bottom-left-radius: 8px;
   background-color: #fd3979;
   display: grid;
@@ -161,7 +162,7 @@
 .weight {
   color: #908f95;
   font-size: 12px;
-  padding: 0 5px;
+  padding: 5px;
   margin-bottom: auto;
   width: 100%;
 }

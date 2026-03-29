@@ -25,7 +25,6 @@ function getYouTubeId(url) {
 }
 
 const ProductSlider = ({ product }) => {
-  const nav = useNavigate();
   const [thumbsSwiper, setThumbsSwiper] = useState(null);
   const [iframeOverlayHidden, setIframeOverlayHidden] = useState(false);
 
@@ -52,7 +51,7 @@ const ProductSlider = ({ product }) => {
       <Swiper
         onSwiper={handleMainSwiper}
         centeredSlides
-        spaceBetween={0}
+        spaceBetween={10}
         navigation={false}
         thumbs={{ swiper: thumbsSwiper }}
         modules={[FreeMode, Navigation, Thumbs, Pagination]}

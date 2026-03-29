@@ -96,7 +96,7 @@ export const Header = () => {
 
       <form onSubmit={searchingProduct} className="search">
         <input
-          placeholder="Поиск..."
+          placeholder="Я ищу..."
           value={searchValue}
           onChange={handleSearchChange}
         />

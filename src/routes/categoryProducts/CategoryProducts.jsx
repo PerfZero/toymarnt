@@ -251,7 +251,15 @@ function CategoryProducts() {
                 {+product?.discountedPrice !== +product?.price &&
                 +product?.price &&
                 +product?.discountedPrice ? (
-                  <div className="mark_discount">%</div>
+                  <div className="mark_discount">
+                    -
+                    {Math.round(
+                      ((+product.price - +product.discountedPrice) /
+                        +product.price) *
+                        100
+                    )}
+                    %
+                  </div>
                 ) : null}
                 <img
                   src={`https://api.toymarket.site/api/image/${product.id}/${product.image}`}
@@ -319,7 +327,7 @@ function CategoryProducts() {
                       nav(`/item/${product.productTypeID}/${product.id}`)
                     }
                   >
-                    {formatNumber(+product.price || +product.discountedPrice)} ₽
+                    {formatNumber(+product.discountedPrice || +product.price)} ₽
                   </div>
                 )
               ) : product.accessabilitySettingsID == 222 ? (
@@ -337,7 +345,7 @@ function CategoryProducts() {
                     nav(`/item/${product.productTypeID}/${product.id}`)
                   }
                 >
-                  {formatNumber(+product.price || +product.discountedPrice)} ₽
+                  {formatNumber(+product.discountedPrice || +product.price)} ₽
                 </div>
               )}
             </div>

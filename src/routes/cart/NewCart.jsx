@@ -181,7 +181,7 @@ const NewCart = () => {
         ? selectedPickupName ||
           "Республика Крым, г. Симферополь, ул. Ленина, д 120"
         : data.address,
-      delivery: state ? "Самовывоз" : "Курьером",
+      delivery: state ? "Самовывоз" : "Доставка",
       pickupPoint: selectedPickupId,
       payBy: !paymentDelivered ? "Наличными" : "Картой",
       products: basket?.map((product) => ({
@@ -222,9 +222,11 @@ const NewCart = () => {
             email: "",
           })
         );
+        window.navigation.reload();
       }, 3000);
     } catch (error) {
       toast.error("Ошибка при оформлении заказа");
+      console.error("Order creation error:", error);
     }
   };
 
@@ -344,25 +346,33 @@ const NewCart = () => {
                           Всегда в наличии
                         </div>
                       )}
-                      <IoMdTrash
-                        className="deleteCartItemIcon"
-                        onClick={() => dispatch(removeFromCart(product.id))}
-                      />
+                      <button className="deleteCartItemIcon">
+                        <IoMdTrash
+                          onClick={() => dispatch(removeFromCart(product.id))}
+                        />
+                      </button>
                     </div>
                     <div className="cart-right-block">
                       <div className="cart_right-prices">
                         <span className="cart-item-price">
-                          {formatNumber(displayQuantity * currentPrice)} ₽
+                          Итого:{" "}
+                          <span style={{ whiteSpace: "nowrap" }}>
+                            {formatNumber(displayQuantity * currentPrice)} ₽
+                          </span>
                         </span>
                         <span className="cart_item_discount">
                           <span>
-                            {formatNumber(
-                              displayQuantity >= product.recomendedMinimalSize
-                                ? product?.discountedPrice || product?.price
-                                : product?.price
-                            )}{" "}
-                            ₽
+                            Цена:{" "}
+                            <span style={{ whiteSpace: "nowrap" }}>
+                              {formatNumber(
+                                displayQuantity >= product.recomendedMinimalSize
+                                  ? product?.discountedPrice || product?.price
+                                  : product?.price
+                              )}{" "}
+                              ₽
+                            </span>
                           </span>
+
                           {product.accessabilitySettingsID == 223 ? (
                             <span
                               className="percent"
@@ -498,7 +508,7 @@ const NewCart = () => {
                 }
                 onClick={() => setDeliveryData("courier")}
               >
-                Курьером
+                Доставка
               </button>
             </div>
             <div className="deliveryInfoText">

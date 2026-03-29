@@ -333,7 +333,7 @@ function SinglePage() {
                           {formatNumber(+product.price)} ₽
                         </span>
                         <span className="percent">
-                          {formatNumber(discount)} %
+                          -{formatNumber(discount)} %
                         </span>
                       </>
                     )}{" "}
@@ -346,7 +346,7 @@ function SinglePage() {
                           {formatNumber(+product.price)} ₽
                         </span>
                         <span className="percent">
-                          {formatNumber(discount)} %
+                          -{formatNumber(discount)} %
                         </span>
                       </>
                     )}
@@ -482,7 +482,7 @@ function SinglePage() {
                 onClick={() => setDescription("description")}
               >
                 Описание
-              </button>
+              </button>{" "}
               {/* {product?.preorder === "true" && ( */}
               {product.accessabilitySettingsID == 223 && (
                 <button
@@ -641,7 +641,7 @@ function SinglePage() {
                           ₽
                         </span>
                         <span className="percent">
-                          {formatNumber(discount)} %
+                          -{formatNumber(discount)} %
                         </span>
                       </>
                     )}
@@ -654,7 +654,7 @@ function SinglePage() {
                           {formatNumber(+product.price)} ₽
                         </span>
                         <span className="percent">
-                          {formatNumber(discount)} %
+                          -{formatNumber(discount)} %
                         </span>
                       </>
                     )}
@@ -832,7 +832,7 @@ function SinglePage() {
               )
             )}
           </div>
-          <div className="caption">
+          <div className="caption caption_mob">
             <div className="caption_right mob">
               <span
                 className="copy_article"

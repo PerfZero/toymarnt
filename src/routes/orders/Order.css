@@ -15,7 +15,7 @@
 
     h3 {
       color: rgb(217, 217, 217);
-      font-size: 32px;
+      font-size: 28px;
       font-weight: 700;
       line-height: 39px;
       letter-spacing: -5%;
@@ -38,7 +38,7 @@
 
     .container-order {
       height: 177px;
-      background: rgb(54, 54, 54);
+      background: #262626;
       border-radius: 8px;
       display: flex;
       align-items: center;
@@ -60,7 +60,7 @@
             gap: 10px;
             h3 {
               color: rgb(255, 255, 255);
-              font-size: 24px;
+              font-size: 20px;
               font-weight: 700;
               line-height: 29px;
               letter-spacing: -5%;
@@ -68,7 +68,7 @@
 
             .dateValue {
               color: rgb(255, 255, 255);
-              font-size: 18px;
+              font-size: 16px;
               font-weight: 400;
               line-height: 22px;
               letter-spacing: -5%;
@@ -141,7 +141,7 @@
       .btn_more {
         padding: 6px 16px 7px;
         border-radius: 10px;
-        background: rgb(74, 74, 74);
+        background: #0003;
         color: rgb(255, 255, 255);
         font-size: 18px;
         font-weight: 500;
