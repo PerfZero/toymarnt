@@ -175,7 +175,7 @@ const NewCart = () => {
     };
 
     loadCart();
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     setSelectedIds((prev) => {
