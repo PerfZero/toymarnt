@@ -37,7 +37,7 @@ function App() {
 
   useEffect(() => {
     if (!localStorage.getItem("user") && !isAuthPage) {
-      // window.location.href = "/auth";
+      window.location.href = "/auth";
     }
 
     if (user) {
