@@ -12,14 +12,12 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { FiPlus, FiMinus } from "react-icons/fi";
 import { IoCopyOutline, IoPaperPlaneOutline } from "react-icons/io5";
-import { Helmet } from "react-helmet-async";
 import arrowIcon from "../../img/arrow-right.svg";
 import notFound from "../../img/404-page-not-found.svg";
 import wildberries from "./icons/wb.png";
 import avito from "./icons/avito.png";
 import yandex from "./icons/ym.png";
 import ozon from "./icons/ozon.png";
-
 import formatNumber from "../../utils/numberFormat";
 import { toast } from "react-hot-toast";
 import ProductSlider from "./ProductSlider";
@@ -28,17 +26,177 @@ import loader from "../../components/catalog/loader1.svg";
 import { SwiperSlide, Swiper } from "swiper/react";
 import { FreeMode } from "swiper/modules";
 
+const getStock = (product) =>
+  Number(product?.inStock ?? product?.in_stock_count ?? 0);
+
+const getPrice = (product) =>
+  Number(
+    product?.price ?? product?.marketing_price ?? product?.retail_price ?? 0
+  );
+
+const getDiscountedPrice = (product) =>
+  Number(
+    product?.discountedPrice ?? product?.retail_price ?? product?.price ?? 0
+  );
+
+const getAvailabilityId = (product) => {
+  if (product?.accessabilitySettingsID) {
+    return Number(product.accessabilitySettingsID);
+  }
+
+  if (product?.availability === "needs_preorder") return 223;
+  if (product?.availability === "always_available") return 224;
+
+  return 222;
+};
+
+const getSize = (product) => {
+  const directSize =
+    product?.shoeSizeName ??
+    product?.size ??
+    product?.productSize ??
+    product?.sizeName;
+
+  if (directSize) return String(directSize);
+
+  const article = String(product?.article || "");
+
+  if (article.includes("_")) {
+    return article.split("_").pop();
+  }
+
+  return "";
+};
+
+const getArticleWithoutSize = (product) => {
+  const article = String(product?.article || "");
+
+  if (!article) return "";
+
+  if (article.includes("_")) {
+    return article.split("_").slice(0, -1).join("_");
+  }
+
+  return article;
+};
+
+const getColorKey = (product) => {
+  if (product?.color) return String(product.color);
+
+  const secondaryId = product?.secondary_property?.id;
+  if (secondaryId) return String(secondaryId);
+
+  return getArticleWithoutSize(product);
+};
+
+const getColorName = (product) => {
+  if (product?.textColor) return product.textColor;
+
+  const value = product?.secondary_property?.value;
+  if (value) return value;
+
+  const articleWithoutSize = getArticleWithoutSize(product);
+  const parts = articleWithoutSize.split("-");
+
+  return parts.length > 1 ? parts[parts.length - 1] : articleWithoutSize;
+};
+
+const canBuyProduct = (product) => {
+  const availabilityId = getAvailabilityId(product);
+
+  if (availabilityId === 222) return getStock(product) > 0;
+  if (availabilityId === 223) return true;
+  if (availabilityId === 224) return true;
+
+  return getStock(product) > 0;
+};
+
+const normalizeProduct = (product) => {
+  const price = getPrice(product);
+  const discountedPrice = getDiscountedPrice(product);
+  const stock = getStock(product);
+  const availabilityId = getAvailabilityId(product);
+  const size = getSize(product);
+  const colorKey = getColorKey(product);
+  const colorName = getColorName(product);
+
+  return {
+    ...product,
+
+    modelID: product?.modelID ?? product?.model_id,
+    modelName: product?.modelName ?? product?.model_name,
+
+    categoryID: product?.categoryID ?? product?.category?.id,
+    categoryName: product?.categoryName ?? product?.category?.name,
+
+    subCategoryID: product?.subCategoryID ?? product?.subcategory?.id,
+    subCategoryName: product?.subCategoryName ?? product?.subcategory?.name,
+
+    productTypeID: product?.productTypeID ?? product?.type?.id,
+    productTypeName: product?.productTypeName ?? product?.type?.name,
+
+    tradeMarkID: product?.tradeMarkID ?? product?.brand?.id,
+    tradeMarkName: product?.tradeMarkName ?? product?.brand?.name,
+
+    producingCountry:
+      product?.producingCountry ?? product?.producing_country?.name,
+
+    price,
+    discountedPrice,
+    inStock: stock,
+    accessabilitySettingsID: availabilityId,
+
+    packageSize: product?.packageSize ?? product?.package_size ?? 1,
+
+    recomendedMinimalSize:
+      product?.recomendedMinimalSize ??
+      product?.recommended_order_quantity ??
+      product?.minimum_order_quantity ??
+      1,
+
+    recomendedMinimalSizeEnabled:
+      product?.recomendedMinimalSizeEnabled ??
+      Number(product?.recommended_order_quantity ?? 1) > 1,
+
+    prepayAmount: product?.prepayAmount ?? product?.prepay_amount,
+    prepayPercent: product?.prepayPercent ?? product?.prepay_percent,
+
+    preorderConditions: product?.preorderConditions ?? product?.terms_of_sell,
+    storeDeliveryInDays: product?.storeDeliveryInDays ?? product?.delivery_time,
+
+    shoeSizeName: size,
+    shoeSizeLength: product?.shoeSizeLength ?? product?.primary_property?.value,
+
+    color: colorKey,
+    textColor: colorName,
+
+    attributes: product?.attributes || [],
+
+    isNew: product?.isNew ?? (product?.is_new ? 1 : 0),
+
+    WBURL: product?.WBURL ?? product?.wildberries_url,
+    OzonURL: product?.OzonURL ?? product?.ozon_url,
+    AvitoURL: product?.AvitoURL ?? product?.avito_url,
+    YaMarketURL: product?.YaMarketURL ?? product?.yandex_market_url,
+
+    WBAccessible: product?.WBAccessible ?? (product?.wildberries_url ? 1 : 0),
+    OzonAccessible: product?.OzonAccessible ?? (product?.ozon_url ? 1 : 0),
+    AvitoAccessible: product?.AvitoAccessible ?? (product?.avito_url ? 1 : 0),
+    YaMarketAccessible:
+      product?.YaMarketAccessible ?? (product?.yandex_market_url ? 1 : 0),
+  };
+};
+
 function SinglePage() {
   const dispatch = useDispatch();
   const nav = useNavigate();
   const { productTypeID, id } = useParams();
   const cart = useSelector((state) => state.cart.items);
-  const [products, setProducts] = useState(null);
+
+  const [products, setProducts] = useState([]);
   const [product, setProduct] = useState(null);
-  const [sizes, setSizes] = useState(new Set());
   const [isSizeBtn, setIsSizeBtn] = useState(null);
   const [description, setDescription] = useState("characteristics");
-  const [colors, setColors] = useState(new Set());
   const [open_marketPlaces, setOpen_marketPlaces] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -46,133 +204,103 @@ function SinglePage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const productsData = await getProductsById(id);
 
-        let allProducts = (await productsData) || [];
+        const response = await getProductsById(id);
+        const payload = response?.data?.data ?? response?.data ?? response;
 
-        const processedProducts = await allProducts;
-        // .filter(
-        //   (product) =>
-        //     product.price &&
-        //     parseInt(product.price) !== 0 &&
-        //     product.inStock &&
-        //     parseInt(product.inStock) !== 0
-        // );
-        setProduct(processedProducts.find((p) => p.id === +id));
-        const modelID = await processedProducts.find((p) => p.id === +id)
-          .modelID;
-        setProducts(processedProducts.filter((i) => i.modelID == modelID));
-        // setTotalSlides(
-        //   product?.otherPhotos?.length + 1 + product?.review ? 1 : 0
-        // );
+        const responseProducts = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.products)
+          ? payload.products
+          : [];
 
-        setTimeout(() => {
-          setColors(
-            new Set(
-              Object.values(
-                allProducts
-                  .filter((item) => item.modelID == modelID)
-                  .filter((item) => item.isMultiProduct)
-                  .reduce((acc, item) => {
-                    if (!acc[item.color]) {
-                      acc[item.color] = {
-                        color: item.color,
-                        img: `https://api.toymarket.site/api/image/${item.id}/${item.photo}`,
-                      };
-                    }
-                    return acc;
-                  }, {})
-              )
-            )
-          );
+        const normalizedProducts = responseProducts.map(normalizeProduct);
 
-          console.log(colors);
-        }, 500);
+        const selectedProduct =
+          normalizedProducts.find((item) => Number(item.id) === Number(id)) ||
+          normalizedProducts.find(canBuyProduct) ||
+          normalizedProducts[0] ||
+          null;
 
-        setIsSizeBtn(
-          processedProducts.find((p) => p.id === +id)?.shoeSizeName ||
-            processedProducts
-              .map((item) => item.shoeSizeName)
-              .filter((item) => item !== "")[0]
-        );
-
-        setIsLoading(false);
+        setProducts(normalizedProducts);
+        setProduct(selectedProduct);
+        setIsSizeBtn(selectedProduct?.shoeSizeName || null);
       } catch (error) {
-        setIsLoading(false);
         console.log(error);
+        setProducts([]);
+        setProduct(null);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchData();
   }, [id]);
 
+  const colors = useMemo(() => {
+    const map = new Map();
+
+    products.forEach((item) => {
+      const colorKey = getColorKey(item);
+
+      if (!map.has(colorKey)) {
+        map.set(colorKey, {
+          color: colorKey,
+          textColor: getColorName(item),
+          img: item?.photo
+            ? `https://api.toymarket.site/api/image/${item.id}/${item.photo}`
+            : item?.image
+            ? `https://api.toymarket.site/api/image/${item.id}/${item.image}`
+            : "",
+          product: item,
+        });
+      }
+    });
+
+    return Array.from(map.values());
+  }, [products]);
+
+  const sizes = useMemo(() => {
+    if (!product) return [];
+
+    return products
+      .filter((item) => getColorKey(item) === getColorKey(product))
+      .map((item) => ({
+        id: item.id,
+        size: getSize(item),
+        product: item,
+        canBuy: canBuyProduct(item),
+      }))
+      .filter((item) => item.size)
+      .sort((a, b) => Number(a.size) - Number(b.size));
+  }, [products, product]);
+
   useEffect(() => {
-    setSizes(
-      new Set(
-        // processedProducts
-        //   .map((item) => item.article.slice(-2))
-        //   .filter((item) => item !== "")
-        products
-          ?.filter(
-            (i) =>
-              product?.textColor === i.textColor &&
-              i.modelID === product?.modelID
-          )
-          .map((item) => item.shoeSizeName)
-          .filter((item) => item !== "")
-      )
+    if (!product || !isSizeBtn) return;
+
+    const findProduct = products.find(
+      (item) =>
+        getColorKey(item) === getColorKey(product) &&
+        getSize(item) === isSizeBtn
     );
 
-    product &&
-      products &&
-      setColors(
-        new Set(
-          Object.values(
-            products
-              ?.filter((item) => item.modelID == product?.modelID)
-              ?.reduce((acc, item) => {
-                if (!acc[item.color]) {
-                  acc[item.color] = {
-                    color: item.color,
-                    img: `https://api.toymarket.site/api/image/${item.id}/${item.photo}`,
-                  };
-                }
-                return acc;
-              }, {})
-          )
-        )
-      );
-  }, [product]);
-
-  useEffect(() => {
-    const findProduct =
-      product?.textColor != null
-        ? products
-            ?.filter((i) => i.textColor == product?.textColor)
-            .find((item) => item.shoeSizeName == isSizeBtn)
-        : product;
-
-    setProduct(findProduct || product);
-  }, [isSizeBtn]);
+    if (findProduct && findProduct.id !== product.id) {
+      setProduct(findProduct);
+    }
+  }, [isSizeBtn, products, product]);
 
   const sentToCart = (item) => dispatch(addToCart(item));
 
   const inCart = cart.find((item) => item.id === product?.id);
 
-  const getDisplayQuantity = (inCart, product) => {
-    if (!inCart || !product) return 0;
-
-    // const boxQuantity = Number(inCart.quantity) * Number(product.inBox);
-    // const packageSize = Number(product.inPackage);
-    // return packageSize && boxQuantity % packageSize !== 0
-    //   ? Math.ceil(boxQuantity)
-    //   : Math.floor(boxQuantity);
-
-    return inCart.quantity;
-  };
+  const displayQuantity = useMemo(
+    () => inCart?.quantity ?? 0,
+    [inCart?.quantity]
+  );
 
   const handleIncrement = () => {
     if (!product) return;
+
     dispatch(
       incrementQuantity({
         productId: product.id,
@@ -184,63 +312,61 @@ function SinglePage() {
     );
   };
 
-  const handleDecrement = (product) => {
+  const handleDecrement = (item) => {
     dispatch(
       decrementQuantity({
-        productId: product.id,
-        inBox: product.inBox,
-        inPackage: product.inPackage,
-        inTheBox: product.inTheBox,
+        productId: item.id,
+        inBox: item.inBox,
+        inPackage: item.inPackage,
+        inTheBox: item.inTheBox,
       })
     );
   };
 
-  const displayQuantity = useMemo(
-    () => getDisplayQuantity(inCart, product),
-    [inCart?.quantity, product?.inBox, product?.inPackage]
-  );
+  const openMarketPlaces =
+    Boolean(product?.WBURL) ||
+    Boolean(product?.OzonURL) ||
+    Boolean(product?.AvitoURL) ||
+    Boolean(product?.YaMarketURL);
 
-  let some_marketPlaces =
-    !product?.WBAccessible ||
-    !product?.OzonAccessible ||
-    !product?.AvitoAccessible ||
-    !product?.YaMarketAccessible;
+  const discount =
+    product?.price && product?.discountedPrice
+      ? Math.round(
+          (1 - Number(product.discountedPrice) / Number(product.price)) * 100
+        )
+      : 0;
 
-  let openMarketPlaces =
-    (product?.WBAccessible === 1 && product?.WBURL) ||
-    (product?.OzonAccessible === 1 && product?.OzonURL) ||
-    (product?.AvitoAccessible === 1 && product?.AvitoURL) ||
-    (product?.YaMarketAccessible === 1 && product?.YaMarketURL);
-
-  // console.log(
-  //   openMarketPlaces,
-  //   " dsfa",
-  //   some_marketPlaces,
-  //   product?.WBAccessible === 0 && product?.WBURL
-  // );
-
-  // скидка = (1 - discountedPrice / product.price) * 100%
-  let a = Number(product?.discountedPrice || 0) / Number(product?.price || 0);
-  // console.log("discountedPrice", Number(product?.discountedPrice || 0));
-  // console.log("price", Number(product?.price || 0));
-
-  let b = 1 - a;
-  let discount = Math.round(b * 100);
-  // let discount = 100000;
-
-  let copyFunction = () => {
+  const copyFunction = () => {
     toast.success("Скопировано");
-    navigator.clipboard.writeText(product?.article);
+    navigator.clipboard.writeText(product?.article || "");
   };
 
-  if (isLoading)
+  const currentProductTypeID = product?.productTypeID ?? productTypeID;
+
+  const currentPrice =
+    Number(product?.price) <= 0
+      ? product?.discountedPrice
+      : inCart
+      ? product?.recomendedMinimalSizeEnabled !== true ||
+        product?.recomendedMinimalSize === 1
+        ? Number(product?.discountedPrice)
+        : displayQuantity >= product?.recomendedMinimalSize
+        ? product?.discountedPrice
+        : Number(product?.price)
+      : product?.recomendedMinimalSizeEnabled &&
+        product?.recomendedMinimalSize > 1
+      ? Number(product?.price)
+      : product?.discountedPrice;
+
+  if (isLoading) {
     return (
       <div className="loader">
         <img width={100} src={loader} alt="" />
       </div>
     );
+  }
 
-  if (!product && !isLoading)
+  if (!isLoading && products.length === 0) {
     return (
       <div className="not-found">
         <img src={notFound} alt="" />
@@ -248,47 +374,73 @@ function SinglePage() {
         <button onClick={() => nav("/")}>Вернуться на главную</button>
       </div>
     );
+  }
+
+  if (!product && products.length > 0) {
+    return (
+      <div className="loader">
+        <img width={100} src={loader} alt="" />
+      </div>
+    );
+  }
 
   return (
     <div className="container singlepage">
       <div className="caption top">
         <div className="caption-box">
-          <Link to={"/cat/" + product?.categoryID}>
-            <span>{product?.categoryName}</span>
-          </Link>
-          <FaChevronRight />
-          <Link to={"/subcat/" + product?.subCategoryID}>
-            <span>{product?.subCategoryName}</span>
-          </Link>
-          <FaChevronRight />
-          <Link to={"/type/" + productTypeID}>
-            <span>{product?.productTypeName}</span>
-          </Link>
+          {product?.categoryID && (
+            <>
+              <Link to={"/cat/" + product.categoryID}>
+                <span>{product.categoryName}</span>
+              </Link>
+              <FaChevronRight />
+            </>
+          )}
+
+          {product?.subCategoryID && (
+            <>
+              <Link to={"/subcat/" + product.subCategoryID}>
+                <span>{product.subCategoryName}</span>
+              </Link>
+              <FaChevronRight />
+            </>
+          )}
+
+          {currentProductTypeID && (
+            <Link to={"/type/" + currentProductTypeID}>
+              <span>{product?.productTypeName}</span>
+            </Link>
+          )}
+
           {product?.tradeMarkName && (
             <>
               <FaChevronRight />
-              <Link to={"/brand/" + product?.tradeMarkID}>
-                <span>{product?.tradeMarkName}</span>
+              <Link to={"/brand/" + product.tradeMarkID}>
+                <span>{product.tradeMarkName}</span>
               </Link>
             </>
           )}
         </div>
+
         <div className="caption_right">
           <span
             className="copy_article"
             onClick={() => {
               toast.success("Скопировано");
-              navigator.clipboard.writeText(product?.publicBarcode);
+              navigator.clipboard.writeText(
+                product?.platform_sku || product?.article
+              );
             }}
           >
-            <IoCopyOutline /> {product?.publicBarcode}
+            <IoCopyOutline /> {product?.platform_sku || product?.article}
           </span>
+
           <span
             className="copy_article"
             onClick={() => {
               const url = encodeURIComponent(window.location.href);
               const text = encodeURIComponent(
-                product?.name || "Привет, посмотри, что продают"
+                product?.name || "Посмотри товар"
               );
               window.open(
                 `https://t.me/share/url?text=${text}&url=${url}`,
@@ -303,165 +455,138 @@ function SinglePage() {
 
       <div className="product-block">
         <ProductSlider product={product} />
+
         <div className="single_page_right">
           <div className="product-content">
             <div className="price_and_discounts">
               <div className="p_price">
                 <h3>
-                  {formatNumber(
-                    +product?.price <= 0
-                      ? product.discountedPrice
-                      : inCart
-                      ? product.recomendedMinimalSizeEnabled != true ||
-                        product.recomendedMinimalSize == 1
-                        ? +product?.discountedPrice
-                        : displayQuantity >= product.recomendedMinimalSize
-                        ? product.discountedPrice
-                        : +product?.price
-                      : product.recomendedMinimalSizeEnabled &&
-                        product.recomendedMinimalSize > 1
-                      ? +product?.price
-                      : product.discountedPrice
-                  )}{" "}
-                  ₽
-                  {inCart &&
-                    product?.price != "" &&
-                    product?.discountedPrice != "" &&
-                    displayQuantity >= product.recomendedMinimalSize && (
-                      <>
-                        <span className="old-price">
-                          {formatNumber(+product.price)} ₽
-                        </span>
-                        <span className="percent">
-                          -{formatNumber(discount)} %
-                        </span>
-                      </>
-                    )}{" "}
-                  {!inCart &&
-                    product?.price != "" &&
-                    product?.discountedPrice != "" &&
-                    product.recomendedMinimalSize <= 1 && (
-                      <>
-                        <span className="old-price">
-                          {formatNumber(+product.price)} ₽
-                        </span>
-                        <span className="percent">
-                          -{formatNumber(discount)} %
-                        </span>
-                      </>
-                    )}
+                  {formatNumber(currentPrice)} ₽
+                  {discount > 0 && product?.recomendedMinimalSize <= 1 && (
+                    <>
+                      <span className="old-price">
+                        {formatNumber(Number(product.price))} ₽
+                      </span>
+                      <span className="percent">
+                        -{formatNumber(discount)} %
+                      </span>
+                    </>
+                  )}
                 </h3>
                 <span>за 1 шт.</span>
               </div>
-              {+product?.price &&
-                product.recomendedMinimalSizeEnabled != false &&
-                product.recomendedMinimalSize > 1 && (
-                  <>
-                    {!inCart && (
-                      <div className="p_discount">
-                        <div className="p_discount_number">
-                          <span>от {product?.recomendedMinimalSize} шт.</span>
-                          <h3>{formatNumber(+product?.discountedPrice)} ₽</h3>
-                        </div>
-                        {product?.discountedPrice && product.price ? (
-                          <>
-                            <div className="discount_percent">
-                              <span>Скидка</span>
-                              <p>{discount}%</p>
-                            </div>
-                          </>
-                        ) : (
-                          <></>
-                        )}
+
+              {Number(product?.price) > 0 &&
+                product.recomendedMinimalSizeEnabled &&
+                product.recomendedMinimalSize > 1 &&
+                !inCart && (
+                  <div className="p_discount">
+                    <div className="p_discount_number">
+                      <span>от {product.recomendedMinimalSize} шт.</span>
+                      <h3>{formatNumber(Number(product.discountedPrice))} ₽</h3>
+                    </div>
+
+                    {discount > 0 && (
+                      <div className="discount_percent">
+                        <span>Скидка</span>
+                        <p>{discount}%</p>
                       </div>
                     )}
-                  </>
+                  </div>
                 )}
             </div>
 
             <span className="product_name">{product?.name}</span>
 
-            {/* {+product?.categoryID !== 3 ? (
-              <></>
-            ) : ( */}
-            <>
-              {product.textColor && product?.isMultiProduct != false && (
-                <div className="color-box">
-                  <span className="colorText">Цвет: {product?.textColor}</span>
+            {colors.length > 1 && (
+              <div className="color-box">
+                <span className="colorText">Цвет: {product?.textColor}</span>
 
-                  <div className="colors">
-                    {Array?.from(colors).map((color, i) => (
-                      <div
-                        key={i}
-                        className={`color-block ${
-                          product?.color === color.color && "activeColor"
-                        }`}
-                        onClick={() => {
-                          setIsSizeBtn(null);
-                          const pr = products.find(
-                            (item) => item.color === color.color
-                          );
-                          setProduct(pr);
-                          setIsSizeBtn(pr.shoeSizeName);
-                        }}
-                      >
-                        <img src={color.img} alt="" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {product.shoeSizeName && (
-                <div className="shoesSizes">
-                  <div className="shoesSizeTitle">
-                    <h3 className="shoesSizeTitle_caption">Выберите размер:</h3>
-                    <u>таблица размеров</u>
-                  </div>
-
-                  <div className="size_container">
-                    <Swiper
-                      spaceBetween={10}
-                      className="sizes-slider"
-                      freeMode={true}
-                      modules={[FreeMode]}
-                      slidesPerView={4}
-                      breakpoints={{
-                        0: {
-                          slidesPerView: 3,
-                        },
-                        520: {
-                          slidesPerView: 4,
-                        },
+                <div className="colors">
+                  {colors.map((color) => (
+                    <div
+                      key={color.color}
+                      className={`color-block ${
+                        getColorKey(product) === color.color
+                          ? "activeColor"
+                          : ""
+                      }`}
+                      onClick={() => {
+                        setProduct(color.product);
+                        setIsSizeBtn(getSize(color.product));
                       }}
                     >
-                      {Array.from(sizes).map((size, i) => (
-                        <SwiperSlide style={{ width: "100px !important" }}>
+                      {color.img ? (
+                        <img src={color.img} alt="" />
+                      ) : (
+                        <span>{color.textColor}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {sizes.length > 0 && (
+              <div className="shoesSizes">
+                <div className="shoesSizeTitle">
+                  <h3 className="shoesSizeTitle_caption">Выберите размер:</h3>
+                  <u>таблица размеров</u>
+                </div>
+
+                <div className="size_container">
+                  <Swiper
+                    spaceBetween={10}
+                    className="sizes-slider"
+                    freeMode={true}
+                    modules={[FreeMode]}
+                    slidesPerView={4}
+                    breakpoints={{
+                      0: { slidesPerView: 3 },
+                      520: { slidesPerView: 4 },
+                    }}
+                  >
+                    {sizes.map(
+                      ({
+                        id: sizeProductId,
+                        size,
+                        product: sizeProduct,
+                        canBuy,
+                      }) => (
+                        <SwiperSlide
+                          key={sizeProductId}
+                          style={{ width: "100px" }}
+                        >
                           <div
-                            key={i}
                             className={`size-block ${
-                              isSizeBtn === size && "activeSize"
-                            } `}
-                            onClick={() => setIsSizeBtn(size)}
+                              product?.id === sizeProductId ? "activeSize" : ""
+                            } ${!canBuy ? "disabledSize" : ""}`}
+                            onClick={() => {
+                              setProduct(sizeProduct);
+                              setIsSizeBtn(size);
+                            }}
                           >
                             <span className="size-letter">{size}</span>
-                            <div className="size-description"></div>
+                            {sizeProduct?.shoeSizeLength && (
+                              <div className="size-description">
+                                {sizeProduct.shoeSizeLength} см
+                              </div>
+                            )}
                           </div>
                         </SwiperSlide>
-                      ))}
-                    </Swiper>
-                  </div>
+                      )
+                    )}
+                  </Swiper>
                 </div>
-              )}
-            </>
-            {/* )} */}
+              </div>
+            )}
 
-            {product?.accessabilitySettingsID == 224 ? (
-              <span className="remained">Всегда в наличии </span>
-            ) : product?.accessabilitySettingsID == 223 ? (
-              <span className="remained">Можно заказать </span>
+            {product?.accessabilitySettingsID === 224 ? (
+              <span className="remained">Всегда в наличии</span>
+            ) : product?.accessabilitySettingsID === 223 ? (
+              <span className="remained">Можно заказать</span>
             ) : product?.inStock > 0 ? (
-              <span className="remained">Осталось {product?.inStock} шт. </span>
+              <span className="remained">Осталось {product.inStock} шт.</span>
             ) : (
               <span className="remained">Нет в наличии</span>
             )}
@@ -475,6 +600,7 @@ function SinglePage() {
               >
                 Характеристики
               </button>
+
               <button
                 className={`small-white-button ${
                   description === "description" ? "activePr" : ""
@@ -482,9 +608,9 @@ function SinglePage() {
                 onClick={() => setDescription("description")}
               >
                 Описание
-              </button>{" "}
-              {/* {product?.preorder === "true" && ( */}
-              {product.accessabilitySettingsID == 223 && (
+              </button>
+
+              {product.accessabilitySettingsID === 223 && (
                 <button
                   className={`small-white-button ${
                     description === "order_conditions" ? "activePr" : ""
@@ -494,29 +620,42 @@ function SinglePage() {
                   Под заказ
                 </button>
               )}
-              {/* )} */}
             </div>
 
             <div className="description-block">
               {description === "description" && (
-                // <p className="description">
-                //   {product?.description ? product.description : "Описания нет"}
-                // </p>
-                <p
-                  className="description"
-                  dangerouslySetInnerHTML={{
-                    __html: product?.description || "Описания нет",
-                  }}
-                ></p>
+                <>
+                  <p
+                    className="description"
+                    dangerouslySetInnerHTML={{
+                      __html: product?.description || "Описания нет",
+                    }}
+                  />
+
+                  {product?.attributes?.length > 0 && (
+                    <div className="description-attributes">
+                      {product.attributes.map((attribute) => (
+                        <SpecRow
+                          key={attribute.id || attribute.name}
+                          label={attribute.name}
+                          value={attribute.value || "-"}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
+
               {description === "characteristics" && (
                 <>
                   {product?.modelName && (
                     <SpecRow label="Модель" value={product.modelName} />
                   )}
+
                   {product?.tradeMarkName && (
                     <SpecRow label="Бренд" value={product.tradeMarkName} />
                   )}
+
                   {product?.article && (
                     <SpecRow
                       label="Артикул"
@@ -525,43 +664,31 @@ function SinglePage() {
                       func={copyFunction}
                     />
                   )}
+
                   {product?.producingCountry && (
                     <SpecRow
                       label="Страна-изготовитель"
                       value={product.producingCountry}
                     />
                   )}
-                  {product?.material && (
-                    <SpecRow label="Материал" value={product.material} />
-                  )}{" "}
+
                   {product?.textColor && (
                     <SpecRow label="Цвет" value={product.textColor} />
                   )}
-                  {product?.kidGender && (
-                    <SpecRow label="Пол" value={product.kidGender} />
+
+                  {product?.shoeSizeName && (
+                    <SpecRow label="Размер" value={product.shoeSizeName} />
                   )}
-                  {(product.minKidAge || product.maxKidAge) && (
-                    <SpecRow
-                      label="Возраст"
-                      value={
-                        product.minKidAge
-                          ? product.maxKidAge
-                            ? `от ${product.minKidAge} до ${product.maxKidAge} лет`
-                            : `от ${product.minKidAge} лет`
-                          : product.maxKidAge
-                          ? `до ${product.maxKidAge} лет`
-                          : ""
-                      }
-                    />
-                  )}{" "}
+
                   {product?.shoeSizeLength && (
                     <SpecRow
-                      label="Длина стопы"
-                      value={`${product.shoeSizeLength} мм`}
+                      label="Длина стельки"
+                      value={`${product.shoeSizeLength} см`}
                     />
                   )}
                 </>
               )}
+
               {description === "order_conditions" && (
                 <>
                   <SpecRow
@@ -571,17 +698,23 @@ function SinglePage() {
 
                   <SpecRow
                     label="Предоплата"
-                    value={`${product?.prepayPercent} %` || "-"}
+                    value={
+                      product?.prepayPercent
+                        ? `${product.prepayPercent} %`
+                        : "-"
+                    }
                   />
 
                   <SpecRow
                     label="Размер предоплаты"
-                    value={`${product?.prepayAmount} ₽` || "-"}
+                    value={
+                      product?.prepayAmount ? `${product.prepayAmount} ₽` : "-"
+                    }
                   />
 
                   <SpecRow
                     label="Срок ожидания (дн)"
-                    value={product?.storeDeliveryInDays || "-"}
+                    value={product?.storeDeliveryInDays ?? "-"}
                   />
                 </>
               )}
@@ -590,12 +723,13 @@ function SinglePage() {
             {product?.keywords?.length > 0 && (
               <div className="product_keywords">
                 <h3 className="sub-title">Ищут по запросам:</h3>
+
                 <div className="product_keywords_items">
-                  {product?.keywords?.map((el, i) => (
+                  {product.keywords.map((el, i) => (
                     <div
                       key={i}
                       onClick={() => {
-                        nav(`/search`);
+                        nav("/search");
                         dispatch(setSearchQuery(el));
                       }}
                       className="request-word"
@@ -611,100 +745,17 @@ function SinglePage() {
           <div className="product_price_box">
             <div className="price_and_discounts">
               <div className="p_price">
-                <h3>
-                  {formatNumber(
-                    +product?.price <= 0
-                      ? product.discountedPrice
-                      : inCart
-                      ? product.recomendedMinimalSizeEnabled != true ||
-                        product.recomendedMinimalSize == 1
-                        ? +product?.discountedPrice
-                        : displayQuantity >= product.recomendedMinimalSize
-                        ? product.discountedPrice
-                        : +product?.price
-                      : product.recomendedMinimalSizeEnabled &&
-                        product.recomendedMinimalSize > 1
-                      ? +product?.price
-                      : product.discountedPrice
-                  )}
-                  ₽
-                  {inCart &&
-                    product?.price != "" &&
-                    product?.discountedPrice != "" &&
-                    displayQuantity >= product.recomendedMinimalSize &&
-                    product.recomendedMinimalSize != 1 && (
-                      <>
-                        <span className="old-price">
-                          {formatNumber(
-                            inCart ? +product.price : +product.discountedPrice
-                          )}{" "}
-                          ₽
-                        </span>
-                        <span className="percent">
-                          -{formatNumber(discount)} %
-                        </span>
-                      </>
-                    )}
-                  {!inCart &&
-                    product?.price != "" &&
-                    product?.discountedPrice != "" &&
-                    product.recomendedMinimalSize <= 1 && (
-                      <>
-                        <span className="old-price">
-                          {formatNumber(+product.price)} ₽
-                        </span>
-                        <span className="percent">
-                          -{formatNumber(discount)} %
-                        </span>
-                      </>
-                    )}
-                </h3>
+                <h3>{formatNumber(currentPrice)} ₽</h3>
                 <span>за 1 шт.</span>
               </div>
-              {+product?.price > 0 && (
-                <>
-                  {!inCart &&
-                    (product.recomendedMinimalSizeEnabled &&
-                    product.recomendedMinimalSize > 1 ? (
-                      <div className="p_discount">
-                        <div className="p_discount_number">
-                          <span>от {product?.recomendedMinimalSize} шт.</span>
-                          <h3>{formatNumber(+product?.discountedPrice)} ₽</h3>
-                        </div>
-                        {product?.discountedPrice && product.price ? (
-                          <>
-                            <div className="discount_percent">
-                              <span>Скидка</span>
-                              <p>{discount}%</p>
-                            </div>
-                          </>
-                        ) : (
-                          <></>
-                        )}
-                      </div>
-                    ) : (
-                      <></>
-                    ))}
-                </>
-              )}
             </div>
 
             {product?.packageSize > 1 && (
-              <p className="min_order">Фасовка по {product?.packageSize} шт</p>
+              <p className="min_order">Фасовка по {product.packageSize} шт</p>
             )}
-            {/*
-            {product?.accessabilitySettingsID == 224 ? (
-              <p className="min_order">Всегда в наличии </p>
-            ) : product?.accessabilitySettingsID == 223 ? (
-              <p className="min_order">Можно заказать </p>
-            ) : product?.inStock > 0 ? (
-              <p className="min_order">Осталось {product?.inStock} шт. </p>
-            ) : (
-              <p className="min_order">Нет в наличии</p>
-            )} */}
+
             <div className="product_button_block">
-              {+product?.inStock > 0 ||
-              product.accessabilitySettingsID != 222 ? (
+              {canBuyProduct(product) ? (
                 <>
                   {inCart && (
                     <div className="counter-container">
@@ -714,7 +765,9 @@ function SinglePage() {
                       >
                         <FiMinus />
                       </button>
+
                       <span className="counter-value">{displayQuantity}</span>
+
                       <button
                         className="counter-button"
                         onClick={handleIncrement}
@@ -737,8 +790,8 @@ function SinglePage() {
                           на{" "}
                           {formatNumber(
                             displayQuantity < product.recomendedMinimalSize
-                              ? product?.price * displayQuantity
-                              : product?.discountedPrice * displayQuantity
+                              ? product.price * displayQuantity
+                              : product.discountedPrice * displayQuantity
                           )}{" "}
                           ₽
                         </span>
@@ -757,98 +810,84 @@ function SinglePage() {
 
             {product?.recomendedMinimalSize > 1 && (
               <div className="rshz">
-                РШЗ: {product?.recomendedMinimalSize} шт.
+                РШЗ: {product.recomendedMinimalSize} шт.
               </div>
             )}
-            {!inCart ? (
+
+            {!inCart && openMarketPlaces && (
               <>
-                {openMarketPlaces ? (
-                  <>
-                    <p className="or_text">или</p>
-                    <div className="other_marketplace">
-                      <button onClick={() => setOpen_marketPlaces((e) => !e)}>
-                        Заказать на другом маркетплейсе{" "}
-                        <img
-                          style={{
-                            transform: open_marketPlaces
-                              ? "rotate(90deg)"
-                              : "rotate(0deg)",
-                          }}
-                          src={arrowIcon}
-                          alt=""
-                        />
-                      </button>
-                      {open_marketPlaces && (
-                        <div className="marketPlaces">
-                          {product?.WBAccessible === 1 && product?.WBURL ? (
-                            <Link target="_blank" to={product?.WBURL}>
-                              <img src={wildberries} alt="" />
-                              Купить на Wildberries
-                            </Link>
-                          ) : (
-                            ""
-                          )}
-                          {product?.OzonAccessible === 1 && product?.OzonURL ? (
-                            <Link target="_blank" to={product?.OzonURL}>
-                              <img src={ozon} alt="" />
-                              Купить на OZON
-                            </Link>
-                          ) : (
-                            ""
-                          )}
-                          {product?.AvitoAccessible === 1 &&
-                          product?.AvitoURL ? (
-                            <Link target="_blank" to={product?.AvitoURL}>
-                              <img src={avito} alt="" /> Купить на Авито
-                            </Link>
-                          ) : (
-                            ""
-                          )}
-                          {product?.YaMarketAccessible === 1 &&
-                          product?.YaMarketURL ? (
-                            <Link target="_blank" to={product?.YaMarketURL}>
-                              <img src={yandex} alt="" />
-                              Купить на Яндекс Маркет
-                            </Link>
-                          ) : (
-                            ""
-                          )}
-                        </div>
+                <p className="or_text">или</p>
+
+                <div className="other_marketplace">
+                  <button onClick={() => setOpen_marketPlaces((e) => !e)}>
+                    Заказать на другом маркетплейсе{" "}
+                    <img
+                      style={{
+                        transform: open_marketPlaces
+                          ? "rotate(90deg)"
+                          : "rotate(0deg)",
+                      }}
+                      src={arrowIcon}
+                      alt=""
+                    />
+                  </button>
+
+                  {open_marketPlaces && (
+                    <div className="marketPlaces">
+                      {product?.WBURL && (
+                        <Link target="_blank" to={product.WBURL}>
+                          <img src={wildberries} alt="" />
+                          Купить на Wildberries
+                        </Link>
+                      )}
+
+                      {product?.OzonURL && (
+                        <Link target="_blank" to={product.OzonURL}>
+                          <img src={ozon} alt="" />
+                          Купить на OZON
+                        </Link>
+                      )}
+
+                      {product?.AvitoURL && (
+                        <Link target="_blank" to={product.AvitoURL}>
+                          <img src={avito} alt="" />
+                          Купить на Авито
+                        </Link>
+                      )}
+
+                      {product?.YaMarketURL && (
+                        <Link target="_blank" to={product.YaMarketURL}>
+                          <img src={yandex} alt="" />
+                          Купить на Яндекс Маркет
+                        </Link>
                       )}
                     </div>
-                  </>
-                ) : (
-                  ""
-                )}
+                  )}
+                </div>
               </>
-            ) : (
-              product?.recomendedMinimalSize &&
-              product?.recomendedMinimalSizeEnabled == 1 &&
-              product.recomendedMinimalSize > 1 && (
-                <p className="tos">
-                  Если продавец включил РШЗ = {product?.recomendedMinimalSize},
-                  то при заказе менее этого значения цена без скидки
-                </p>
-              )
             )}
           </div>
+
           <div className="caption caption_mob">
             <div className="caption_right mob">
               <span
                 className="copy_article"
                 onClick={() => {
                   toast.success("Скопировано");
-                  navigator.clipboard.writeText(product?.publicBarcode);
+                  navigator.clipboard.writeText(
+                    product?.platform_sku || product?.article
+                  );
                 }}
               >
-                <IoCopyOutline /> {product?.publicBarcode}
+                <IoCopyOutline /> {product?.platform_sku || product?.article}
               </span>
+
               <span
                 className="copy_article"
                 onClick={() => {
                   const url = encodeURIComponent(window.location.href);
                   const text = encodeURIComponent(
-                    product?.name || "Привет, посмотри, что продают"
+                    product?.name || "Посмотри товар"
                   );
                   window.open(
                     `https://t.me/share/url?text=${text}&url=${url}`,

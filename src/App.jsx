@@ -11,7 +11,7 @@ import OrderInfo from "./routes/orderInfo/OrderInfo";
 import CategoryProducts from "./routes/categoryProducts/CategoryProducts";
 import AuthTelegram from "./auth/Auth";
 import { useDispatch } from "react-redux";
-import { getUser } from "./api";
+import { getToken, getUser } from "./api";
 import { setUserInfo } from "./context/cartSlice";
 import News from "./routes/categoryProducts/News";
 import Search from "./routes/categoryProducts/Search";
@@ -26,7 +26,7 @@ function App() {
   const dispatch = useDispatch();
   const location = useLocation();
   const isAuthPage = location.pathname === "/auth";
-  const token = localStorage.getItem("user");
+  const user = localStorage.getItem("user");
 
   useEffect(() => {
     if (window.Telegram && window.Telegram.WebApp) {
@@ -37,12 +37,12 @@ function App() {
 
   useEffect(() => {
     if (!localStorage.getItem("user") && !isAuthPage) {
-      window.location.href = "/auth";
+      // window.location.href = "/auth";
     }
 
-    if (token) {
+    if (user) {
       const fetchData = async () => {
-        const userData = await getUser();
+        const userData = await getToken();
         if (userData) {
           dispatch(setUserInfo(userData));
         }
@@ -60,7 +60,7 @@ function App() {
         {/* <Header /> */}
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/item/:productTypeID/:id" element={<SinglePage />} />
+          <Route path="/item/:id" element={<SinglePage />} />
           <Route path="/cart" element={<NewCart />} />
           <Route path="/orders" element={<Order />} />
           <Route path="/orderInfo/:id" element={<OrderInfo />} />

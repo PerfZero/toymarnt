@@ -19,7 +19,7 @@ export const Header = () => {
   let location = useLocation();
 
   const { data: categoriesData } = useGetCategoriesQuery();
-  const products = categoriesData?.data || [];
+  const products = categoriesData || [];
 
   const searchValue = useSelector((state) => state.search.searchQuery);
   const [openSidebar, setOpenSidebar] = useState(false);

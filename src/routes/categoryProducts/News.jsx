@@ -15,6 +15,7 @@ import noImg from "../../img/no_img.png";
 import { useGoBackOrHome } from "../../utils/goBackOrHome";
 import loader from "../../components/catalog/loader1.svg";
 import { BiPlus } from "react-icons/bi";
+import { getModelId } from "../../components/catalog/ProductCard";
 
 const PAGE_LIMIT = 20;
 const MAX_PRODUCTS = 200;
@@ -247,7 +248,7 @@ function CategoryProducts() {
               <div key={product.id} className="catalogItem_card">
                 <Link
                   className="product-img-link"
-                  to={`/item/${product.productTypeID}/${product.id}`}
+                  to={`/item/${getModelId(product)}`}
                 >
                   {+product?.discountedPrice !== +product?.price &&
                   +product?.price &&
@@ -325,9 +326,7 @@ function CategoryProducts() {
                   ) : (
                     <div
                       className="price"
-                      onClick={() =>
-                        navigate(`/item/${product.productTypeID}/${product.id}`)
-                      }
+                      onClick={() => navigate(`/item/${getModelId(product)}`)}
                     >
                       {formatNumber(+product.discountedPrice || +product.price)}{" "}
                       ₽
@@ -344,9 +343,7 @@ function CategoryProducts() {
                 ) : (
                   <div
                     className="price"
-                    onClick={() =>
-                      navigate(`/item/${product.productTypeID}/${product.id}`)
-                    }
+                    onClick={() => navigate(`/item/${getModelId(product)}`)}
                   >
                     {formatNumber(+product.discountedPrice || +product.price)} ₽
                   </div>
@@ -598,7 +595,7 @@ export default CategoryProducts;
 //               <div key={product.id} className="catalogItem_card">
 //                 <Link
 //                   className="product-img-link"
-//                   to={`/item/${product.productTypeID}/${product.id}`}
+//                   to={`/item/${getModelId(product)}`}
 //                 >
 //                   {product.discountedPrice ? (
 //                     <div className="mark_discount">%</div>

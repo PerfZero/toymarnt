@@ -1,4 +1,11 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import {
+  getCart as getCartApi,
+  addCartItem as addCartItemApi,
+  updateCartItemQuantity as updateCartItemQuantityApi,
+  removeCartItem as removeCartItemApi,
+  clearServerCart as clearServerCartApi,
+} from "../api";
 
 const loadCartFromStorage = () => {
   const savedCart = localStorage.getItem("cart");
@@ -9,6 +16,40 @@ const saveCartToStorage = (cart) => {
   localStorage.setItem("cart", JSON.stringify(cart));
 };
 
+export const fetchCart = createAsyncThunk("cart/fetchCart", async () => {
+  return await getCartApi();
+});
+
+export const syncAddCartItem = createAsyncThunk(
+  "cart/syncAddCartItem",
+  async ({ product_id, quantity }) => {
+    return await addCartItemApi({ product_id, quantity });
+  }
+);
+
+export const syncUpdateCartItemQuantity = createAsyncThunk(
+  "cart/syncUpdateCartItemQuantity",
+  async ({ product_id, quantity }) => {
+    return await updateCartItemQuantityApi({ product_id, quantity });
+  }
+);
+
+export const syncRemoveCartItem = createAsyncThunk(
+  "cart/syncRemoveCartItem",
+  async (product_id) => {
+    await removeCartItemApi(product_id);
+    return product_id;
+  }
+);
+
+export const syncClearServerCart = createAsyncThunk(
+  "cart/syncClearServerCart",
+  async () => {
+    await clearServerCartApi();
+    return [];
+  }
+);
+
 const initialState = {
   items: loadCartFromStorage(),
   userInfo: {
@@ -18,6 +59,8 @@ const initialState = {
     companyName: "",
     inn: "",
   },
+  loading: false,
+  error: null,
 };
 
 const cartSlice = createSlice({
@@ -25,119 +68,123 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     addToCart: (state, action) => {
-      // const existingItem = state.items.find(
-      //   (item) => item.id === action.payload.id
-      // );
-      // if (existingItem) {
-      //   existingItem.quantity += 1;
-      // } else {
-      //   state.items.push({ ...action.payload, quantity: 1 });
-      // }
-
       const existingItem = state.items.find(
         (item) => item.id === action.payload.id
       );
+
       if (existingItem) {
-        existingItem.quantity += action.payload.inPackage || 1;
+        existingItem.quantity += Number(action.payload.inPackage || 1);
       } else {
         state.items.push({
           ...action.payload,
           quantity: Number(action.payload.recomendedMinimalSize || 1),
         });
       }
+
+      // request to api
+      
+      addCartItemApi({
+        product_id: action.payload.id,
+        quantity: Number(action.payload.recomendedMinimalSize || 1),
+      });
+
       saveCartToStorage(state.items);
     },
+
     removeFromCart: (state, action) => {
       state.items = state.items.filter((item) => item.id !== action.payload);
       saveCartToStorage(state.items);
     },
+
     updateQuantity: (state, action) => {
       const { id, quantity } = action.payload;
       const item = state.items.find((item) => item.id === id);
+
       if (item && quantity > 0) {
         item.quantity = quantity;
       }
+
       saveCartToStorage(state.items);
     },
+
     clearCart: (state) => {
       state.items = [];
       saveCartToStorage(state.items);
     },
+
     setCart: (state, action) => {
       state.items = action.payload;
       saveCartToStorage(state.items);
     },
+
     setUserInfo: (state, action) => {
       state.userInfo = { ...state.userInfo, ...action.payload };
-      // userInfo localStorage'ga saqlanmaydi, agar kerak bo'lsa qo'shish mumkin
     },
+
     incrementQuantity: (state, action) => {
-      const { productId, inBox, inPackage, inStock, inTheBox } = action.payload;
+      const { productId, inStock } = action.payload;
       const item = state.items.find((item) => item.id === productId);
       if (!item) return;
-
-      // const maxQuantity = inStock * (Number(inTheBox) / Number(inBox));
-
-      // let incrementAmount = 1 / (Number(inBox) / Number(inPackage));
-
-      // const getDisplayQuantity = (product) => {
-      //   if (!product) return 0;
-      //   const boxQuantity = Number(product.quantity) * Number(product.inBox);
-      //   const packageSize = Number(product.inPackage);
-      //   return packageSize && boxQuantity % packageSize !== 0
-      //     ? Math.ceil(boxQuantity)
-      //     : Math.floor(boxQuantity);
-      // };
-
-      // const newQuantity = Number(item.quantity + incrementAmount);
-
-      // console.log(newQuantity);
-
-      // item.quantity =
-      //   getDisplayQuantity(item) < item.inStock ? newQuantity : item.quantity;
 
       const newQuantity = Number(item.quantity) + Number(item.inPackage || 1);
 
       if (item.accessabilitySettingsID != 222 && newQuantity <= 100) {
         item.quantity = newQuantity;
-        saveCartToStorage(state.items);
-      } else {
-        if (item.quantity >= inStock) return;
-        item.quantity =
-          newQuantity <= item.inStock ? newQuantity : item.quantity;
-        saveCartToStorage(state.items);
+
+        updateCartItemQuantityApi({
+          product_id: productId,
+          quantity: newQuantity,
+        });
+      } else if (item.quantity < inStock && newQuantity <= item.inStock) {
+        item.quantity = newQuantity;
+        updateCartItemQuantityApi({
+          product_id: productId,
+          quantity: newQuantity,
+        });
       }
+
+      saveCartToStorage(state.items);
     },
+
     decrementQuantity: (state, action) => {
-      const { productId, inBox, inPackage, inTheBox } = action.payload;
+      const { productId, inPackage } = action.payload;
       const item = state.items.find((item) => item.id === productId);
       if (!item || item.quantity <= 0) return;
 
-      // let minusAmount = 1 / (Number(inBox) / Number(inPackage));
-      let minusAmount = inPackage || 1;
-      // const boxQuantity = Number(item.quantity) * Number(inBox);
-      // if (Number(inBox) >= boxQuantity) {
-      //   minusAmount = 1 / (Number(inBox) / Number(inPackage));
-      // } else if (Number(inBox) + Number(inTheBox) <= boxQuantity) {
-      //   minusAmount = Number(inTheBox) / Number(inBox);
-      // }
+      const minusAmount = Number(inPackage || item.inPackage || 1);
+      const newQuantity = Number(item.quantity) - minusAmount;
 
-      const newQuantity = Number(item.quantity - minusAmount);
-
-      // console.log(newQuantity);
-
-      // if (newQuantity > 0) {
-      //   item.quantity = newQuantity;
-      // } else {
-      //   state.items = state.items.filter((item) => item.id !== productId);
-      // }
       if (newQuantity > 0) {
         item.quantity = newQuantity;
+        // request to api
+
+        updateCartItemQuantityApi({
+          product_id: productId,
+          quantity: newQuantity,
+        });
       } else {
         state.items = state.items.filter((item) => item.id !== productId);
       }
+
       saveCartToStorage(state.items);
     },
+  },
+
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchCart.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchCart.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload;
+        saveCartToStorage(state.items);
+      })
+      .addCase(fetchCart.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      });
   },
 });
 
@@ -151,4 +198,5 @@ export const {
   incrementQuantity,
   decrementQuantity,
 } = cartSlice.actions;
+
 export default cartSlice.reducer;

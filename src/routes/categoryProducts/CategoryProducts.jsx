@@ -16,6 +16,7 @@ import noImg from "../../img/no_img.png";
 import { useGoBackOrHome } from "../../utils/goBackOrHome";
 import loader from "../../components/catalog/loader1.svg";
 import { BiPlus } from "react-icons/bi";
+import { getModelId } from "../../components/catalog/ProductCard";
 
 function CategoryProducts() {
   const dispatch = useDispatch();
@@ -246,7 +247,7 @@ function CategoryProducts() {
             <div key={product.id} className="catalogItem_card">
               <Link
                 className="product-img-link"
-                to={`/item/${product.productTypeID}/${product.id}`}
+                to={`/item/${getModelId(product)}`}
               >
                 {+product?.discountedPrice !== +product?.price &&
                 +product?.price &&
@@ -323,9 +324,7 @@ function CategoryProducts() {
                 ) : (
                   <div
                     className="price"
-                    onClick={() =>
-                      nav(`/item/${product.productTypeID}/${product.id}`)
-                    }
+                    onClick={() => nav(`/item/${getModelId(product)}`)}
                   >
                     {formatNumber(+product.discountedPrice || +product.price)} ₽
                   </div>
@@ -341,9 +340,7 @@ function CategoryProducts() {
               ) : (
                 <div
                   className="price"
-                  onClick={() =>
-                    nav(`/item/${product.productTypeID}/${product.id}`)
-                  }
+                  onClick={() => nav(`/item/${getModelId(product)}`)}
                 >
                   {formatNumber(+product.discountedPrice || +product.price)} ₽
                 </div>

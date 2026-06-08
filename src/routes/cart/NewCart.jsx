@@ -1,31 +1,126 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  clearCart,
-  removeFromCart,
-  incrementQuantity,
-  decrementQuantity,
-} from "../../context/cartSlice";
+import { setCart, setUserInfo } from "../../context/cartSlice";
 import { FaMinus, FaPlus } from "react-icons/fa";
 import "./Cart.css";
 import { getDeclination } from "../../utils/getDeclination";
 import formatNumber from "../../utils/numberFormat";
 import { IoMdTrash } from "react-icons/io";
-import { Checkbox, message } from "antd";
+import { Checkbox, message, Switch } from "antd";
 import { IoCopyOutline } from "react-icons/io5";
-import { Switch } from "antd";
 import toast from "react-hot-toast";
 import noImg from "../../img/no_img.png";
-import { newOrder, payTBank } from "../../api/index";
-import { setCart, setUserInfo } from "../../context/cartSlice";
+import {
+  newOrder,
+  payTBank,
+  getCart,
+  updateCartItemQuantity,
+  removeCartItem,
+  clearServerCart,
+} from "../../api/index";
 import { FaChevronLeft } from "react-icons/fa6";
 import { useGetPickupPointsQuery } from "../../context/service/productsApi";
 import { useGoBackOrHome } from "../../utils/goBackOrHome";
+import { getModelId } from "../../components/catalog/ProductCard";
+
+const getCartPayload = (response) =>
+  response?.data?.data ?? response?.data ?? response;
+
+const getCartItems = (response) => {
+  const payload = getCartPayload(response);
+
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.products)) return payload.products;
+  if (Array.isArray(payload?.cart)) return payload.cart;
+
+  return [];
+};
+
+const getProductFromCartItem = (item) => item?.product ?? item;
+
+const getStock = (product) =>
+  Number(product?.inStock ?? product?.in_stock_count ?? 0);
+
+const getPrice = (product) =>
+  Number(
+    product?.price ?? product?.marketing_price ?? product?.retail_price ?? 0
+  );
+
+const getDiscountedPrice = (product) =>
+  Number(
+    product?.discountedPrice ?? product?.retail_price ?? product?.price ?? 0
+  );
+
+const getAvailabilityId = (product) => {
+  if (product?.accessabilitySettingsID)
+    return Number(product.accessabilitySettingsID);
+  if (product?.availability === "needs_preorder") return 223;
+  if (product?.availability === "always_available") return 224;
+  return 222;
+};
+
+const getSize = (product) => {
+  if (product?.shoeSizeName) return product.shoeSizeName;
+
+  const article = String(product?.article || "");
+  if (article.includes("_")) return article.split("_").pop();
+
+  return "";
+};
+
+const normalizeCartItem = (item) => {
+  const product = getProductFromCartItem(item);
+  const quantity = Number(item?.quantity ?? product?.quantity ?? 1);
+  const price = getPrice(product);
+  const discountedPrice = getDiscountedPrice(product);
+  const availabilityId = getAvailabilityId(product);
+
+  return {
+    ...product,
+    quantity,
+
+    productTypeID:
+      product?.productTypeID ?? product?.type_id ?? product?.type?.id,
+    article: product?.article ?? product?.name ?? "",
+    image: product?.image ?? product?.photo ?? "",
+
+    price,
+    discountedPrice,
+    inStock: getStock(product),
+    accessabilitySettingsID: availabilityId,
+
+    packageSize: product?.packageSize ?? product?.package_size ?? 1,
+    inPackage: product?.inPackage ?? product?.package_size ?? 1,
+
+    recomendedMinimalSize:
+      product?.recomendedMinimalSize ??
+      product?.recommended_order_quantity ??
+      product?.minimum_order_quantity ??
+      1,
+
+    recomendedMinimalSizeEnabled:
+      product?.recomendedMinimalSizeEnabled ??
+      Number(product?.recommended_order_quantity ?? 1) > 1,
+
+    prepayAmount: Number(product?.prepayAmount ?? product?.prepay_amount ?? 0),
+    prepayPercent: product?.prepayPercent ?? product?.prepay_percent ?? "",
+
+    shoeSizeName: product?.shoeSizeName ?? getSize(product),
+    textColor:
+      product?.textColor ??
+      product?.secondary_property?.value ??
+      product?.secondary_property?.id ??
+      "",
+  };
+};
 
 const NewCart = () => {
   const nav = useNavigate();
   const dispatch = useDispatch();
+  const back = useGoBackOrHome();
+
   const { data: pickupPointsData } = useGetPickupPointsQuery();
   const pickupPoints = pickupPointsData?.data || [];
 
@@ -33,9 +128,11 @@ const NewCart = () => {
   const reduxUserInfo = useSelector((state) => state.cart.userInfo);
 
   const [deliveryData, setDeliveryData] = useState("pickup");
-  const [selectedItems, setSelectedItems] = useState([]);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [selectedAll, setSelectedAll] = useState(false);
   const [openTotalBlock, setOpenTotalBlock] = useState(false);
+  const [isCartLoading, setIsCartLoading] = useState(false);
+
   const [data, setData] = useState({
     name: "",
     phone: "",
@@ -50,8 +147,44 @@ const NewCart = () => {
   const [selectedPickup, setSelectedPickup] = useState(null);
   const [selectedPickupName, setSelectedPickupName] = useState("Не выбран");
 
+  const selectedItems = useMemo(
+    () => cart.filter((item) => selectedIds.includes(item.id)),
+    [cart, selectedIds]
+  );
+
+  const syncCart = async () => {
+    const response = await getCart();
+    const items = getCartItems(response).map(normalizeCartItem);
+
+    dispatch(setCart(items));
+    setSelectedIds(items.map((item) => item.id));
+    setSelectedAll(true);
+  };
+
   useEffect(() => {
-    setSelectedItems(cart);
+    const loadCart = async () => {
+      try {
+        setIsCartLoading(true);
+        await syncCart();
+      } catch (error) {
+        console.error("Cart loading error:", error);
+        toast.error("Не удалось загрузить корзину");
+      } finally {
+        setIsCartLoading(false);
+      }
+    };
+
+    loadCart();
+  }, []);
+
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const cartIds = cart.map((item) => item.id);
+
+      if (prev.length === 0) return cartIds;
+
+      return prev.filter((id) => cartIds.includes(id));
+    });
   }, [cart]);
 
   useEffect(() => {
@@ -64,127 +197,168 @@ const NewCart = () => {
     });
   }, [reduxUserInfo]);
 
-  const getDisplayQuantity = (product) => {
-    if (!product) return 0;
-    // const boxQuantity = Number(product.quantity) * Number(product.inBox);
-    // const packageSize = Number(product.inPackage);
-    // return packageSize && boxQuantity % packageSize !== 0
-    //   ? Math.ceil(boxQuantity)
-    //   : Math.floor(boxQuantity);
+  useEffect(() => {
+    setSelectedAll(cart.length > 0 && selectedIds.length === cart.length);
+  }, [cart.length, selectedIds.length]);
 
-    return Number(product.quantity);
-  };
-
-  const handleDecrement = (product) => {
-    dispatch(
-      decrementQuantity({
-        productId: product.id,
-        inBox: product.inBox,
-        inPackage: product.inPackage,
-        inTheBox: product.inTheBox,
-      })
-    );
-  };
+  const getDisplayQuantity = (product) => Number(product?.quantity ?? 0);
 
   const getCurrentPrice = (product) => {
     const displayQuantity = getDisplayQuantity(product);
 
+    if (product.accessabilitySettingsID === 223) {
+      return Number(
+        product.prepayAmount || product.discountedPrice || product.price
+      );
+    }
+
     if (
-      (displayQuantity >= (+product.recomendedMinimalSize || Infinity) &&
+      (displayQuantity >= Number(product.recomendedMinimalSize || Infinity) &&
         product.discountedPrice) ||
-      product.recomendedMinimalSizeEnabled == false ||
-      product.recomendedMinimalSize == 0 ||
-      product.recomendedMinimalSize == 1
+      product.recomendedMinimalSizeEnabled === false ||
+      Number(product.recomendedMinimalSize) <= 1
     ) {
-      return Number(product.discountedPrice); // Chegirmali narx
+      return Number(product.discountedPrice || product.price);
     }
-    return Number(product.price); // Asl narx
+
+    return Number(product.price);
   };
 
-  const deletedItems = () => {
-    if (selectedAll) {
-      dispatch(clearCart());
-      return setSelectedAll(false);
+  const updateQuantity = async (product, quantity) => {
+    if (quantity <= 0) {
+      await deleteItem(product.id);
+      return;
     }
-    selectedItems.forEach((item) => {
-      dispatch(removeFromCart(item.id));
-    });
-    setSelectedItems([]);
+
+    try {
+      await updateCartItemQuantity({
+        product_id: product.id,
+        quantity,
+      });
+
+      dispatch(
+        setCart(
+          cart.map((item) =>
+            item.id === product.id ? { ...item, quantity } : item
+          )
+        )
+      );
+    } catch (error) {
+      console.error("Cart quantity update error:", error);
+      toast.error("Не удалось обновить количество");
+      await syncCart();
+    }
   };
 
-  // umumiy miqdorni hisoblash
-  const totalCount = selectedItems?.reduce((acc, product) => {
-    acc += getDisplayQuantity(product);
-    return acc;
-  }, 0);
+  const handleIncrement = async (product) => {
+    const currentQuantity = getDisplayQuantity(product);
+    const nextQuantity = currentQuantity + 1;
 
-  // Umumiy narxni hisoblash
-  const totalPrice = selectedItems?.reduce((acc, product) => {
-    const displayQuantity = getDisplayQuantity(product);
-    const currentPrice =
-      product.accessabilitySettingsID == 223
-        ? product.prepayAmount
-        : getCurrentPrice(product);
-
-    acc += displayQuantity * currentPrice;
-    return acc;
-  }, 0);
-
-  // let totalSavings = selectedItems.reduce((acc, product) => {
-  //   let saving = Number(product.price) - Number(product.discountedPrice);
-  //   return acc + saving;
-  // }, 0);
-
-  let totalSavings = selectedItems.reduce((acc, product) => {
-    const displayQuantity = getDisplayQuantity(product);
     if (
-      product?.discountedPrice &&
-      product?.price &&
-      displayQuantity >= (+product.recomendedMinimalSize || Infinity)
+      product.accessabilitySettingsID === 222 &&
+      product.inStock > 0 &&
+      nextQuantity > product.inStock
     ) {
-      // Faqat chegirma ishlaydigan mahsulotlar uchun
-      let saving =
-        (Number(product.price) - Number(product.discountedPrice)) *
-        displayQuantity;
-
-      saving < 0 ? (saving = saving * -1) : (saving = saving);
-      return acc + saving;
+      toast.error("Недостаточно товара в наличии");
+      return;
     }
-    return acc;
+
+    await updateQuantity(product, nextQuantity);
+  };
+
+  const handleDecrement = async (product) => {
+    await updateQuantity(product, getDisplayQuantity(product) - 1);
+  };
+
+  const deleteItem = async (productId) => {
+    try {
+      await removeCartItem(productId);
+      dispatch(setCart(cart.filter((item) => item.id !== productId)));
+      setSelectedIds((ids) => ids.filter((id) => id !== productId));
+    } catch (error) {
+      console.error("Cart remove error:", error);
+      toast.error("Не удалось удалить товар");
+      await syncCart();
+    }
+  };
+
+  const deletedItems = async () => {
+    try {
+      if (selectedAll || selectedIds.length === cart.length) {
+        await clearServerCart();
+        dispatch(setCart([]));
+        setSelectedIds([]);
+        setSelectedAll(false);
+        return;
+      }
+
+      await Promise.all(selectedIds.map((id) => removeCartItem(id)));
+
+      dispatch(setCart(cart.filter((item) => !selectedIds.includes(item.id))));
+      setSelectedIds([]);
+    } catch (error) {
+      console.error("Cart clear error:", error);
+      toast.error("Не удалось очистить корзину");
+      await syncCart();
+    }
+  };
+
+  const totalCount = selectedItems.reduce((acc, product) => {
+    return acc + getDisplayQuantity(product);
   }, 0);
 
-  let totalPriceNotDiscounted = selectedItems.reduce((acc, product) => {
+  const totalPrice = selectedItems.reduce((acc, product) => {
+    return acc + getDisplayQuantity(product) * getCurrentPrice(product);
+  }, 0);
+
+  const totalSavings = selectedItems.reduce((acc, product) => {
     const displayQuantity = getDisplayQuantity(product);
-    acc += displayQuantity * Number(product.price);
+
+    if (
+      product.accessabilitySettingsID !== 223 &&
+      product.discountedPrice &&
+      product.price &&
+      displayQuantity >= Number(product.recomendedMinimalSize || Infinity)
+    ) {
+      return (
+        acc +
+        Math.abs(Number(product.price) - Number(product.discountedPrice)) *
+          displayQuantity
+      );
+    }
+
     return acc;
   }, 0);
 
   const createOrder = async () => {
-    let basket = selectedItems;
-    if (!basket.length)
+    const basket = selectedItems;
+
+    if (!basket.length) {
       return message.error(
         "Пожалуйста, выберите необходимые товары из корзины"
       );
+    }
 
     if (!data.name) return message.error("Пожалуйста, введите ваше имя");
     if (!data.phone)
       return message.error("Пожалуйста, введите ваш номер телефона");
-    if (!data.address && deliveryData === "delivery")
+    if (!data.address && deliveryData === "courier") {
       return message.error("Пожалуйста, введите ваш адрес");
+    }
     if (!data.email) return message.error("Пожалуйста, введите ваш email");
 
-    window.Telegram.WebApp.MainButton.offClick(createOrder);
-    let state = deliveryData === "pickup";
+    const isPickup = deliveryData === "pickup";
+
     const order = {
       ...data,
-      address: state
+      address: isPickup
         ? selectedPickupName ||
           "Республика Крым, г. Симферополь, ул. Ленина, д 120"
         : data.address,
-      delivery: state ? "Самовывоз" : "Доставка",
+      delivery: isPickup ? "Самовывоз" : "Доставка",
       pickupPoint: selectedPickupId,
       payBy: !paymentDelivered ? "Наличными" : "Картой",
-      products: basket?.map((product) => ({
+      products: basket.map((product) => ({
         id: product.id,
         name: product.article,
         quantity: product.quantity,
@@ -195,16 +369,21 @@ const NewCart = () => {
 
     try {
       const orderData = await newOrder(order);
+
       if (orderData && (paymentDelivered || deliveryData !== "pickup")) {
         const bankResponse = await payTBank(orderData.orderID);
         window.location.href = bankResponse?.url;
       } else {
         localStorage.removeItem("cart");
       }
+
+      await clearServerCart();
       dispatch(setCart([]));
+
       toast.success(
         "Заказ оформлен, наш менеджер в ближайшее время с Вами свяжется"
       );
+
       setTimeout(() => {
         nav("/");
         setData({
@@ -222,7 +401,7 @@ const NewCart = () => {
             email: "",
           })
         );
-        window.navigation.reload();
+        window.location.reload();
       }, 3000);
     } catch (error) {
       toast.error("Ошибка при оформлении заказа");
@@ -230,7 +409,13 @@ const NewCart = () => {
     }
   };
 
-  const back = useGoBackOrHome();
+  if (isCartLoading) {
+    return (
+      <div className="loader">
+        <span>Загрузка корзины...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="container box">
@@ -253,70 +438,77 @@ const NewCart = () => {
               </span>
             </div>
           </div>
+
           <div className="selectAll_deleteAll">
             <div className="selection">
               <Checkbox
                 id="checkbox"
-                checked={selectedAll || selectedItems.length === cart.length}
+                checked={selectedAll}
                 onChange={(e) => {
-                  let state = e.target.checked;
-                  if (state) setSelectedItems([...cart]);
-                  else setSelectedItems([]);
-
-                  setSelectedAll(state);
+                  const checked = e.target.checked;
+                  setSelectedIds(checked ? cart.map((item) => item.id) : []);
+                  setSelectedAll(checked);
                 }}
               />
               <label htmlFor="checkbox">Выбрать все</label>
             </div>
-            <button onClick={() => deletedItems()}>
+
+            <button onClick={deletedItems} disabled={cart.length === 0}>
               <span>Очистить корзину</span> <IoMdTrash />
             </button>
           </div>
+
           <div
             className="card-block-list"
             style={{ display: openTotalBlock ? "none" : "flex" }}
           >
             {cart.map((product) => {
-              const currentPrice =
-                product.accessabilitySettingsID != 223
-                  ? getCurrentPrice(product)
-                  : product.prepayAmount;
+              const currentPrice = getCurrentPrice(product);
               const displayQuantity = getDisplayQuantity(product);
+              const selected = selectedIds.includes(product.id);
+              const productTypeID = product.productTypeID || product.type_id;
 
               return (
                 <div key={product.id} className="cart-item-row">
                   <div className="cart_item_checkbox">
                     <Checkbox
-                      checked={selectedItems.includes(product)}
-                      onChange={(e) =>
-                        e.target.checked
-                          ? setSelectedItems([...selectedItems, product])
-                          : setSelectedItems(
-                              selectedItems.filter(
-                                (item) => item.id !== product.id
-                              )
-                            )
-                      }
+                      checked={selected}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds((ids) => [
+                            ...new Set([...ids, product.id]),
+                          ]);
+                        } else {
+                          setSelectedIds((ids) =>
+                            ids.filter((id) => id !== product.id)
+                          );
+                        }
+                      }}
                       className="cart_item_checkbox_checkbox"
                     />
                   </div>
+
                   <div
                     className="cart-item-picture"
-                    onClick={() =>
-                      nav(`/item/${product.productTypeID}/${product.id}`)
-                    }
+                    onClick={() => nav(`/item/${getModelId(product)}`)}
                   >
                     <img
-                      src={`https://api.toymarket.site/api/image/${product.id}/${product.image}`}
+                      src={
+                        product.image
+                          ? `https://api.toymarket.site/api/image/${product.id}/${product.image}`
+                          : noImg
+                      }
                       alt="product"
                       onError={(e) => {
                         e.currentTarget.src = noImg;
                       }}
                     />
                   </div>
+
                   <div className="cart-item-data">
                     <div className="cart-item-label">
                       <p>{product?.name || "-"}</p>
+
                       <span
                         className="copy_article"
                         onClick={() => {
@@ -326,32 +518,34 @@ const NewCart = () => {
                       >
                         <IoCopyOutline /> {product.article}
                       </span>
+
                       <div className="cart_item_details">
                         {product.shoeSizeName &&
-                          `Размер: ${product?.shoeSizeName} `}
-                        {product.textColor && ` | Цвет: ${product?.textColor}`}
-                        {product.material &&
-                          ` | Материал: ${product?.material}`}
+                          `Размер: ${product.shoeSizeName}`}
+                        {product.textColor && ` | Цвет: ${product.textColor}`}
                       </div>
-                      {product.accessabilitySettingsID == 222 && (
+
+                      {product.accessabilitySettingsID === 222 && (
                         <div className="cart_item_details">
                           Осталось {product.inStock} шт.
                         </div>
-                      )}{" "}
-                      {product.accessabilitySettingsID == 223 && (
+                      )}
+
+                      {product.accessabilitySettingsID === 223 && (
                         <div className="cart_item_details">Можно заказать</div>
-                      )}{" "}
-                      {product.accessabilitySettingsID == 224 && (
+                      )}
+
+                      {product.accessabilitySettingsID === 224 && (
                         <div className="cart_item_details">
                           Всегда в наличии
                         </div>
                       )}
+
                       <button className="deleteCartItemIcon">
-                        <IoMdTrash
-                          onClick={() => dispatch(removeFromCart(product.id))}
-                        />
+                        <IoMdTrash onClick={() => deleteItem(product.id)} />
                       </button>
                     </div>
+
                     <div className="cart-right-block">
                       <div className="cart_right-prices">
                         <span className="cart-item-price">
@@ -360,20 +554,16 @@ const NewCart = () => {
                             {formatNumber(displayQuantity * currentPrice)} ₽
                           </span>
                         </span>
+
                         <span className="cart_item_discount">
                           <span>
                             Цена:{" "}
                             <span style={{ whiteSpace: "nowrap" }}>
-                              {formatNumber(
-                                displayQuantity >= product.recomendedMinimalSize
-                                  ? product?.discountedPrice || product?.price
-                                  : product?.price
-                              )}{" "}
-                              ₽
+                              {formatNumber(currentPrice)} ₽
                             </span>
                           </span>
 
-                          {product.accessabilitySettingsID == 223 ? (
+                          {product.accessabilitySettingsID === 223 ? (
                             <span
                               className="percent"
                               style={{ background: "#1fb73a" }}
@@ -385,31 +575,29 @@ const NewCart = () => {
                           ) : product.discountedPrice &&
                             product.price &&
                             displayQuantity >=
-                              (product.recomendedMinimalSize || Infinity) ? (
-                            <>
-                              <span className="percent">
-                                <span>
-                                  {product.accessabilitySettingsID != 223 &&
-                                    product.prepayPercent != "" &&
-                                    "-"}{" "}
-                                  {product.accessabilitySettingsID != 223 &&
-                                    Math.round(
-                                      (1 -
-                                        Number(product?.discountedPrice) /
-                                          Number(product?.price)) *
-                                        100
-                                    )}
-                                  %
-                                </span>
+                              Number(
+                                product.recomendedMinimalSize || Infinity
+                              ) ? (
+                            <span className="percent">
+                              <span>
+                                -
+                                {Math.round(
+                                  (1 -
+                                    Number(product.discountedPrice) /
+                                      Number(product.price)) *
+                                    100
+                                )}
+                                %
                               </span>
-                            </>
+                            </span>
                           ) : (
                             ""
                           )}
                         </span>
                       </div>
+
                       {product.inStock > 0 ||
-                      product.accessabilitySettingsID != 222 ? (
+                      product.accessabilitySettingsID !== 222 ? (
                         <div className="counter_box">
                           {product.inPackage > 1 ? (
                             <div className="cart_item_min_order">
@@ -418,39 +606,11 @@ const NewCart = () => {
                           ) : (
                             <div className="cart_item_min_order">&nbsp;</div>
                           )}
+
                           <div className="cart-item-counter">
                             <FaMinus onClick={() => handleDecrement(product)} />
                             <div className="cic-count">{displayQuantity}</div>
-                            <FaPlus
-                              onClick={() => {
-                                product.accessabilitySettingsID != 222 &&
-                                  dispatch(
-                                    incrementQuantity({
-                                      productId: product.id,
-                                      inBox: product.inBox,
-                                      inPackage: product.inPackage,
-                                      inStock: product.inStock,
-                                      inTheBox: product.inTheBox,
-                                    })
-                                  );
-
-                                if (
-                                  displayQuantity > product.inStock ||
-                                  product.accessabilitySettingsID != 222
-                                )
-                                  return;
-
-                                dispatch(
-                                  incrementQuantity({
-                                    productId: product.id,
-                                    inBox: product.inBox,
-                                    inPackage: product.inPackage,
-                                    inStock: product.inStock,
-                                    inTheBox: product.inTheBox,
-                                  })
-                                );
-                              }}
-                            />
+                            <FaPlus onClick={() => handleIncrement(product)} />
                           </div>
 
                           {product.recomendedMinimalSize > 1 && (
@@ -493,6 +653,7 @@ const NewCart = () => {
 
           <div className="deliveryInfo">
             <h4>Способ получения</h4>
+
             <div className="deliveryTypeButtons">
               <button
                 className={
@@ -502,6 +663,7 @@ const NewCart = () => {
               >
                 Самовывоз
               </button>
+
               <button
                 className={
                   deliveryData === "courier" ? "deliveryInfoButton_active" : ""
@@ -511,59 +673,46 @@ const NewCart = () => {
                 Доставка
               </button>
             </div>
+
             <div className="deliveryInfoText">
               <span>Пункт выдачи заказа</span>
-              {deliveryData === "pickup" ? (
-                <u
-                  // style={{
-                  //   cursor: deliveryData === "pickup" ? "pointer" : "no-drop",
-                  // }}
-                  onClick={() => setModal1(true)}
-                >
-                  Выбрать
-                </u>
-              ) : (
-                ""
+              {deliveryData === "pickup" && (
+                <u onClick={() => setModal1(true)}>Выбрать</u>
               )}
             </div>
 
-            {modal1 ? (
+            {modal1 && (
               <div
                 className="modal1 cartmodal1"
                 onClick={() => setModal1(false)}
               >
                 <div className="modal1_header card-block-element-title">
-                  <FaChevronLeft
-                    onClick={() => {
-                      setModal1(false);
-                    }}
-                  />
+                  <FaChevronLeft onClick={() => setModal1(false)} />
                   <h3>Доступные ПВЗ:</h3>
                 </div>
+
                 <div className="dropdown2">
                   <span>Выберите пункт выдачи заказа:</span>
-                  {pickupPoints.map((item, index) => {
-                    if (item.pickupPointStatus) {
-                      return (
-                        <div
-                          key={index}
-                          onClick={() => {
-                            setSelectedPickupId(item.id);
-                            setSelectedPickup(item);
-                            setSelectedPickupName(item.address);
-                          }}
-                          className="address_item"
-                        >
-                          <span>{item.name}</span>
-                          <p>{item.address}</p>
-                        </div>
-                      );
-                    }
-                  })}
+
+                  {pickupPoints.map((item) =>
+                    item.pickupPointStatus ? (
+                      <div
+                        key={item.id}
+                        onClick={() => {
+                          setSelectedPickupId(item.id);
+                          setSelectedPickup(item);
+                          setSelectedPickupName(item.address);
+                          setModal1(false);
+                        }}
+                        className="address_item"
+                      >
+                        <span>{item.name}</span>
+                        <p>{item.address}</p>
+                      </div>
+                    ) : null
+                  )}
                 </div>
               </div>
-            ) : (
-              ""
             )}
 
             <div className="deliverAddress">
@@ -572,7 +721,9 @@ const NewCart = () => {
                   "295034, Республика Крым, г. Симферополь, ул. Ленина, д 120"
                 : "Менеджер свяжется для уточнения адреса пункта доставки."}
             </div>
+
             <div className="w11">Стоимость доставки:</div>
+
             <div className="free">
               {deliveryData === "pickup"
                 ? "Бесплатно"
@@ -583,12 +734,13 @@ const NewCart = () => {
           <div className="cartTotal">
             <div className="totalBlock">
               <h4>Ваш заказ</h4>
+
               <ul>
                 <li>
                   <span>Товары, {totalCount} шт.</span>
-                  {/* <span>{formatNumber(totalPrice)} ₽</span> */}
                   <span>{formatNumber(totalPrice + totalSavings)} ₽</span>
                 </li>
+
                 <li>
                   <span>Экономия</span>
                   <span>
@@ -596,20 +748,23 @@ const NewCart = () => {
                     {formatNumber(totalSavings)} ₽
                   </span>
                 </li>
+
                 <li>
                   <h2>Итого:</h2>
                   <h2>{formatNumber(totalPrice)} ₽</h2>
                 </li>
+
                 {deliveryData !== "courier" && selectedPickupId && (
                   <li>
                     <p>Оплата при получении</p>
                     <Switch
                       defaultChecked={false}
-                      onChange={(e) => setPaymentDelivered(!e)}
+                      onChange={(checked) => setPaymentDelivered(!checked)}
                     />
                   </li>
                 )}
-                {deliveryData != "courier" &&
+
+                {deliveryData !== "courier" &&
                   selectedPickup &&
                   !paymentDelivered && (
                     <li>
@@ -619,6 +774,7 @@ const NewCart = () => {
                     </li>
                   )}
               </ul>
+
               <button
                 disabled={!selectedPickupId && deliveryData === "pickup"}
                 onClick={createOrder}
@@ -626,12 +782,13 @@ const NewCart = () => {
               >
                 {!selectedPickupId && deliveryData === "pickup"
                   ? "Выберите пункт выдачи"
-                  : deliveryData == "courier"
+                  : deliveryData === "courier"
                   ? "Оплатить онлайн"
                   : paymentDelivered
                   ? "Оплатить онлайн"
                   : "Заказать"}
               </button>
+
               <div className="cart_conditions">
                 Нажимая на кнопку, вы соглашаетесь с
                 <Link> Условиями обработки персональных данных</Link>, а также с
@@ -641,6 +798,7 @@ const NewCart = () => {
 
             <div className="order-form">
               <h4>Получатель</h4>
+
               <div className="form-group">
                 <input
                   type="text"
@@ -669,25 +827,19 @@ const NewCart = () => {
                   value={data.phone}
                   onChange={(e) => setData({ ...data, phone: e.target.value })}
                 />
+
                 {deliveryData === "courier" && (
                   <textarea
-                    type="text"
                     className="formInput"
-                    placeholder={
-                      deliveryData !== "pickup"
-                        ? "Адрес доставки"
-                        : selectedPickupName ||
-                          "Республика Крым, г. Симферополь, ул. Ленина, д 120"
-                    }
+                    placeholder="Адрес доставки"
                     value={data.address}
-                    readOnly={deliveryData === "pickup"}
                     onChange={(e) => {
                       setData({ ...data, address: e.target.value });
                     }}
                   />
                 )}
+
                 <textarea
-                  type="text"
                   className="formInput"
                   placeholder="Комментарий"
                   value={data.comment}
@@ -704,7 +856,7 @@ const NewCart = () => {
         {!openTotalBlock && (
           <div
             className={`cart_mobile_footer ${
-              selectedItems.length == 0 && "hidden"
+              selectedItems.length === 0 ? "hidden" : ""
             }`}
           >
             <a
