@@ -11,7 +11,6 @@ import FilterModal from "./FilterModal";
 import { BsChevronLeft } from "react-icons/bs";
 import "./CategoryProducts.css";
 import SortModal from "./SortModal";
-import InfiniteScroll from "react-infinite-scroll-component";
 import noImg from "../../img/no_img.png";
 import { useGoBackOrHome } from "../../utils/goBackOrHome";
 import loader from "../../components/catalog/loader1.svg";

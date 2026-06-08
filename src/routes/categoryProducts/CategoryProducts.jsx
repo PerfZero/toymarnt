@@ -11,7 +11,6 @@ import { useNavigate, Link, useParams } from "react-router-dom";
 import FilterModal from "./FilterModal";
 import { BsChevronLeft } from "react-icons/bs";
 import SortModal from "./SortModal";
-import InfiniteScroll from "react-infinite-scroll-component";
 import noImg from "../../img/no_img.png";
 import { useGoBackOrHome } from "../../utils/goBackOrHome";
 import loader from "../../components/catalog/loader1.svg";
@@ -71,7 +70,6 @@ function CategoryProducts() {
       });
 
       let seen = new Set();
-      let seenCat3 = new Set();
       let products = [];
 
       products1?.data?.forEach((product) => {
@@ -116,7 +114,7 @@ function CategoryProducts() {
     };
 
     fetchProducts();
-  }, [offset, id]);
+  }, [offset, id, totalData,triggerGetProducts]);
 
   useEffect(() => {
     let result = [...products];

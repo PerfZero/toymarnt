@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import logo from "../img/logo.png";
 import { LoginButton } from "@telegram-auth/react";
 import "./auth.css";
-import axios from "axios";
 
 const AuthTelegram = () => {
   const navigate = useNavigate();

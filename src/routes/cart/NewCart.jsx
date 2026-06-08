@@ -175,7 +175,7 @@ const NewCart = () => {
     };
 
     loadCart();
-  }, []);
+  }, [syncCart]);
 
   useEffect(() => {
     setSelectedIds((prev) => {
@@ -466,7 +466,6 @@ const NewCart = () => {
               const currentPrice = getCurrentPrice(product);
               const displayQuantity = getDisplayQuantity(product);
               const selected = selectedIds.includes(product.id);
-              const productTypeID = product.productTypeID || product.type_id;
 
               return (
                 <div key={product.id} className="cart-item-row">

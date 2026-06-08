@@ -32,7 +32,7 @@ export const Header = () => {
     if (location.pathname !== "/search") {
       dispatch(setSearchQuery(""));
     }
-  }, [location.pathname]);
+  }, [location.pathname, dispatch]);
 
   // Sidebarni tashqi klik bilan yopish
   useEffect(() => {

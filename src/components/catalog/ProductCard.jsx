@@ -183,7 +183,6 @@ function ProductCard({ products = [] }) {
   const discountedPrice = getDiscountedPrice(product);
   const stock = getStock(product);
   const availabilityId = getAvailabilityId(product);
-  const productTypeId = getProductTypeId(product);
   const finalPrice = discountedPrice || price;
   const canBuySelectedProduct = canBuyProduct(product);
 

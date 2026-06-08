@@ -114,7 +114,7 @@ function TypesProducts() {
     };
 
     fetchData();
-  }, [id, offset]);
+  }, [id, offset, filteredProducts.length, totalData, getProductsByType]);
 
   // Apply additional filters (status, price, article) and search
   useEffect(() => {

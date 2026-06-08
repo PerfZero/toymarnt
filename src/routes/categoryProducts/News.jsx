@@ -6,19 +6,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { decrementQuantity, incrementQuantity } from "../../context/cartSlice";
 import { FiPlus, FiMinus } from "react-icons/fi";
 import formatNumber from "../../utils/numberFormat";
-import { useNavigate, Link, useParams } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import FilterModal from "./FilterModal";
 import { BsChevronLeft } from "react-icons/bs";
 import SortModal from "./SortModal";
-import InfiniteScroll from "react-infinite-scroll-component";
 import noImg from "../../img/no_img.png";
 import { useGoBackOrHome } from "../../utils/goBackOrHome";
 import loader from "../../components/catalog/loader1.svg";
 import { BiPlus } from "react-icons/bi";
 import { getModelId } from "../../components/catalog/ProductCard";
-
-const PAGE_LIMIT = 20;
-const MAX_PRODUCTS = 200;
 
 function CategoryProducts() {
   const dispatch = useDispatch();

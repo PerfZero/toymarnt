@@ -11,7 +11,7 @@ import OrderInfo from "./routes/orderInfo/OrderInfo";
 import CategoryProducts from "./routes/categoryProducts/CategoryProducts";
 import AuthTelegram from "./auth/Auth";
 import { useDispatch } from "react-redux";
-import { getToken, getUser } from "./api";
+import { getToken } from "./api";
 import { setUserInfo } from "./context/cartSlice";
 import News from "./routes/categoryProducts/News";
 import Search from "./routes/categoryProducts/Search";
@@ -49,7 +49,7 @@ function App() {
       };
       fetchData();
     }
-  }, [isAuthPage]);
+  }, [isAuthPage, dispatch, user]);
 
   return (
     <div className="app">
