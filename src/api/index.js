@@ -153,7 +153,7 @@ export const getToken = async () => {
     const user = JSON.parse(localStorage.getItem("user"));
 
     const response = await axios.post(
-      "https://toymarket.site/auth/login/telegram/widget",
+      "https://api.toymarket.site/auth/login/telegram/widget",
       {
         data: user,
       },
