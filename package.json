@@ -2,6 +2,7 @@
   "name": "toys_new",
   "version": "0.1.0",
   "private": true,
+  "proxy": "https://api.toymarket.site",
   "dependencies": {
     "@reduxjs/toolkit": "^2.6.1",
     "@telegram-auth/react": "^1.0.4",

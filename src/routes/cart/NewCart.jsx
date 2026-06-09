@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setCart, setUserInfo } from "../../context/cartSlice";
@@ -152,14 +152,14 @@ const NewCart = () => {
     [cart, selectedIds]
   );
 
-  const syncCart = async () => {
+  const syncCart = useCallback(async () => {
     const response = await getCart();
     const items = getCartItems(response).map(normalizeCartItem);
 
     dispatch(setCart(items));
     setSelectedIds(items.map((item) => item.id));
     setSelectedAll(true);
-  };
+  }, [dispatch]);
 
   useEffect(() => {
     const loadCart = async () => {
@@ -175,7 +175,7 @@ const NewCart = () => {
     };
 
     loadCart();
-  }, [dispatch]);
+  }, [dispatch, syncCart]);
 
   useEffect(() => {
     setSelectedIds((prev) => {
@@ -494,7 +494,7 @@ const NewCart = () => {
                     <img
                       src={
                         product.image
-                          ? `https://api.toymarket.site/api/image/${product.id}/${product.image}`
+                          ? `https://api.toymarket.site/api/image/${product.id}/image`
                           : noImg
                       }
                       alt="product"

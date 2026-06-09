@@ -1,6 +1,9 @@
 import React, { useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import { useDispatch } from "react-redux";
+import { HelmetProvider } from "react-helmet-async";
+
 import Home from "./routes/home/Home";
 import Footer from "./components/footer/Footer";
 import SinglePage from "./routes/singlepage/SinglePage";
@@ -10,21 +13,19 @@ import Order from "./routes/orders/Order";
 import OrderInfo from "./routes/orderInfo/OrderInfo";
 import CategoryProducts from "./routes/categoryProducts/CategoryProducts";
 import AuthTelegram from "./auth/Auth";
-import { useDispatch } from "react-redux";
 import { getToken } from "./api";
 import { setUserInfo } from "./context/cartSlice";
 import News from "./routes/categoryProducts/News";
 import Search from "./routes/categoryProducts/Search";
 import TypesProducts from "./routes/categoryProducts/TypesProducts";
 import BySubcategories from "./routes/categoryProducts/BySubcategoriyes";
-import { useLocation } from "react-router-dom";
 import { NotFound } from "./routes/NotFound/NotFound";
 import BrandProducts from "./routes/categoryProducts/BrandProducts";
-import { HelmetProvider } from "react-helmet-async";
 
 function App() {
   const dispatch = useDispatch();
   const location = useLocation();
+
   const isAuthPage = location.pathname === "/auth";
   const user = localStorage.getItem("user");
 
@@ -36,20 +37,29 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!localStorage.getItem("user") && !isAuthPage) {
+    const protectedRoutes = ["/cart", "/orders", "/orderInfo"];
+
+    const isProtectedRoute = protectedRoutes.some((route) =>
+      location.pathname.startsWith(route)
+    );
+
+    if (!user && isProtectedRoute) {
       window.location.href = "/auth";
+      return;
     }
 
-    if (user) {
+    if (user && isProtectedRoute) {
       const fetchData = async () => {
         const userData = await getToken();
+
         if (userData) {
           dispatch(setUserInfo(userData));
         }
       };
+
       fetchData();
     }
-  }, [isAuthPage, dispatch, user]);
+  }, [location.pathname, dispatch, user]);
 
   return (
     <div className="app">
@@ -57,7 +67,7 @@ function App() {
         <Toaster />
 
         {!isAuthPage && <Header />}
-        {/* <Header /> */}
+
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/item/:id" element={<SinglePage />} />
@@ -68,14 +78,13 @@ function App() {
           <Route path="/type/:id" element={<TypesProducts />} />
           <Route path="/subcat/:id" element={<BySubcategories />} />
           <Route path="/brand/:id" element={<BrandProducts />} />
-
           <Route path="/search" element={<Search />} />
           <Route path="/new" element={<News />} />
           <Route path="/auth" element={<AuthTelegram />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
+
         {!isAuthPage && <Footer />}
-        {/* <Footer /> */}
       </HelmetProvider>
     </div>
   );

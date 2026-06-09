@@ -144,7 +144,7 @@ const getCategories = async () => {
 };
 
 const api = axios.create({
-  baseURL: "https://api.toymarket.site/api",
+  baseURL: "https://api.toymarket.site/",
   withCredentials: true,
 });
 
