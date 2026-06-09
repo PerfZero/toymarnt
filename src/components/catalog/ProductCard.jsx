@@ -66,15 +66,35 @@ export const getGroupKey = (product) => {
   return String(product?.id);
 };
 
-export const getPrice = (product) =>
+export const getRetailPrice = (product) =>
+  Number(product?.retail_price ?? product?.price ?? 0);
+
+export const getMarketingPrice = (product) =>
+  Number(product?.marketing_price ?? 0);
+
+export const getQuantitySteps = (product) =>
   Number(
-    product?.price ?? product?.marketing_price ?? product?.retail_price ?? 0
+    product?.quantity_steps ??
+      product?.quantitySteps ??
+      product?.min_quantity ??
+      product?.minQuantity ??
+      0
   );
 
-export const getDiscountedPrice = (product) =>
-  Number(
-    product?.discountedPrice ?? product?.retail_price ?? product?.price ?? 0
-  );
+export const isRshzEnabled = (product) => {
+  return Boolean(product.primary_price == "retail");
+};
+
+export const getPrice = (product) => {
+  const retailPrice = getRetailPrice(product);
+  const marketingPrice = getMarketingPrice(product);
+
+  if (isRshzEnabled(product) && marketingPrice) {
+    return marketingPrice;
+  }
+
+  return retailPrice;
+};
 
 export const getProductTypeId = (product) =>
   product?.productTypeID ?? product?.type_id ?? product?.typeId ?? product?.id;
@@ -110,7 +130,7 @@ export const canBuyProduct = (product) => {
 };
 
 export const canShowGroup = (products = []) =>
-  products.some((product) => getPrice(product) || getDiscountedPrice(product));
+  products.some((product) => getPrice(product));
 
 function ProductCard({ products = [] }) {
   const nav = useNavigate();
@@ -179,17 +199,20 @@ function ProductCard({ products = [] }) {
   const inCart = cartData.find((item) => item.id === product.id);
   const displayQuantity = inCart?.quantity ?? 0;
 
-  const price = getPrice(product);
-  const discountedPrice = getDiscountedPrice(product);
+  const retailPrice = getRetailPrice(product);
+  const marketingPrice = getMarketingPrice(product);
+  const quantitySteps = getQuantitySteps(product);
+  const rshzEnabled = isRshzEnabled(product);
+
+  const finalPrice = getPrice(product);
   const stock = getStock(product);
   const availabilityId = getAvailabilityId(product);
-  const finalPrice = discountedPrice || price;
   const canBuySelectedProduct = canBuyProduct(product);
 
   if (!finalPrice) return null;
 
-  const imageSrc = product?.image
-    ? `https://api.toymarket.site/api/image/${product.id}/${product.image}`
+  const imageSrc = product?.id
+    ? `https://api.toymarket.site/assets/products/${product.id}/image`
     : noImg;
 
   const handleIncrement = () => {
@@ -220,9 +243,12 @@ function ProductCard({ products = [] }) {
   return (
     <div className="catalogItem_card">
       <Link className="product-img-link" to={`/item/${getModelId(product)}`}>
-        {discountedPrice !== price && price && discountedPrice ? (
+        {rshzEnabled &&
+        marketingPrice &&
+        retailPrice &&
+        marketingPrice < retailPrice ? (
           <div className="mark_discount">
-            -{Math.round(((price - discountedPrice) / price) * 100)}%
+            -{Math.round(((retailPrice - marketingPrice) / retailPrice) * 100)}%
           </div>
         ) : null}
 
@@ -276,20 +302,21 @@ function ProductCard({ products = [] }) {
           })}
       </div>
 
-      {availabilityId === 222 ? (
-        stock > 0 ? (
-          <p className="weight">Осталось: {stock} шт</p>
-        ) : null
-      ) : availabilityId === 223 ? (
-        <>
+      <div>
+        {stock > 0 ? <p className="weight">Осталось: {stock} шт</p> : null}
+
+        {rshzEnabled && quantitySteps && marketingPrice ? (
           <p className="weight">
-            Под заказ: {product?.storeDeliveryInDays || 0} дн.
+            от {quantitySteps} ед. - {formatNumber(marketingPrice)} ₽
           </p>
-          <p className="weight">Предоплата: {getPrepayPercent(product)} %</p>
-        </>
-      ) : availabilityId === 224 ? (
-        <p className="weight">Всегда в наличии</p>
-      ) : null}
+        ) : null}
+
+        {rshzEnabled && retailPrice ? (
+          <p className="weight">
+           от {product.quantity_steps} шт {formatNumber(retailPrice)} ₽
+          </p>
+        ) : null}
+      </div>
 
       {canBuySelectedProduct ? (
         inCart ? (

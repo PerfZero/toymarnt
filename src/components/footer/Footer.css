@@ -26,8 +26,9 @@ footer {
   }
 }
 
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 1024px) {
   footer {
-    display: none;
+    /* display: none; */
+    padding-bottom: 150px !important;
   }
 }

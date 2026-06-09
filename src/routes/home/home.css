@@ -24,11 +24,10 @@
   z-index: 101;
 }
 
-
-.go-to-order-wrap{
+.go-to-order-wrap {
   bottom: 0;
 }
-@media screen and (max-width:768px) {
+@media screen and (max-width: 1024px) {
   .go-to-order-wrap {
     bottom: 80px;
   }

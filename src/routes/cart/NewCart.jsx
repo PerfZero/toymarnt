@@ -493,8 +493,8 @@ const NewCart = () => {
                   >
                     <img
                       src={
-                        product.image
-                          ? `https://api.toymarket.site/api/image/${product.id}/image`
+                        product.id
+                          ? `https://api.toymarket.site/assets/products/${product.id}/image`
                           : noImg
                       }
                       alt="product"

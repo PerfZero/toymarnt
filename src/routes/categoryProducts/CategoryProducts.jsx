@@ -114,7 +114,7 @@ function CategoryProducts() {
     };
 
     fetchProducts();
-  }, [offset, id, totalData,triggerGetProducts]);
+  }, [offset, id, totalData, triggerGetProducts]);
 
   useEffect(() => {
     let result = [...products];
@@ -261,7 +261,7 @@ function CategoryProducts() {
                   </div>
                 ) : null}
                 <img
-                  src={`https://api.toymarket.site/api/image/${product.id}/${product.image}`}
+                  src={`https://api.toymarket.site/assets/products/${product.id}/image`}
                   alt={product.article}
                   // className="picture"
                   className={`product-image`}

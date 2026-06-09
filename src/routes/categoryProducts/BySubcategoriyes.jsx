@@ -267,7 +267,7 @@ function BySubcategories() {
                       </div>
                     ) : null}
                     <img
-                      src={`https://api.toymarket.site/api/image/${product.id}/${product.image}`}
+                      src={`https://api.toymarket.site/assets/products/${product.id}/image`}
                       alt={product.article}
                       // className="picture"
                       className={`product-image`}

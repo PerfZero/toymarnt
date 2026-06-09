@@ -28,7 +28,7 @@ const getProductsById = async (id) => {
 };
 const getProductsByTypeWithLimit = async (id, limit) => {
   const req = await fetch(
-    "https://api.toymarket.site/products?category=" +
+    "https://api.toymarket.site/products?category_ids=" +
       id +
       (limit ? "&limit=" + limit : "")
   );
@@ -39,7 +39,7 @@ const getProductsByTypeWithLimit = async (id, limit) => {
 
 const getNewProducts = async (limit) => {
   const req = await fetch(
-    "https://api.toymarket.site/products?category=-1" + "&limit=" + limit
+    "https://api.toymarket.site/products?category_ids=-1" + "&limit=" + limit
   );
   const res = await req.json();
 

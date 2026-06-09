@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FiX } from "react-icons/fi";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -15,10 +15,13 @@ import {
 } from "swiper/modules";
 import { useGoBackOrHome } from "../../utils/goBackOrHome";
 import noImg from "../../img/no_img.png";
+import axios from "axios";
+
+const API_URL = "https://api.toymarket.site";
 
 function getYouTubeId(url) {
   const regExp =
-    /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url?.match(regExp);
   return match && match[2].length === 11 ? match[2] : null;
 }
@@ -26,17 +29,48 @@ function getYouTubeId(url) {
 const ProductSlider = ({ product }) => {
   const [thumbsSwiper, setThumbsSwiper] = useState(null);
   const [iframeOverlayHidden, setIframeOverlayHidden] = useState(false);
+  const [imagesCount, setImagesCount] = useState(0);
 
   const mainSwiperRef = useRef(null);
+  const back = useGoBackOrHome();
+
+  const productId = product?.id;
+
+  useEffect(() => {
+    if (!productId) return;
+
+    const getImagesCount = async () => {
+      try {
+        const response = await axios.get(
+          `${API_URL}/assets/products/${productId}/more_images`
+        );
+
+        setImagesCount(Number(response.data) || 0);
+      } catch (error) {
+        console.error("More images count error:", error);
+        setImagesCount(0);
+      }
+    };
+
+    getImagesCount();
+  }, [productId]);
+
+  const moreImages = useMemo(() => {
+    return Array.from({ length: imagesCount }, (_, index) => index);
+  }, [imagesCount]);
 
   const handleMainSwiper = (swiper) => {
     mainSwiperRef.current = swiper;
+
     setTimeout(() => {
       swiper.slideToLoop(0, 0);
     }, 0);
   };
 
-  const back = useGoBackOrHome();
+  const mainImageUrl = `${API_URL}/assets/products/${productId}/image`;
+
+  const getMoreImageUrl = (index) =>
+    `${API_URL}/assets/products/${productId}/more_images/${index}`;
 
   return (
     <div className="slider">
@@ -63,8 +97,8 @@ const ProductSlider = ({ product }) => {
       >
         <SwiperSlide>
           <img
-            src={`https://api.toymarket.site/api/image/${product?.id}/${product?.photo}`}
-            alt={`image-${product?.id}`}
+            src={mainImageUrl}
+            alt={`image-${productId}`}
             className="image"
             onError={(e) => {
               e.currentTarget.src = noImg;
@@ -72,11 +106,12 @@ const ProductSlider = ({ product }) => {
             }}
           />
         </SwiperSlide>
-        {product?.otherPhotos?.filter(Boolean).map((slide, i) => (
-          <SwiperSlide key={i}>
+
+        {moreImages.map((index) => (
+          <SwiperSlide key={index}>
             <img
-              src={`https://api.toymarket.site/api/product_other_image/${product?.id}/${slide}`}
-              alt={`image-${product?.id}-${i}`}
+              src={getMoreImageUrl(index)}
+              alt={`image-${productId}-${index}`}
               className="image"
               onError={(e) => {
                 e.currentTarget.src = noImg;
@@ -85,6 +120,7 @@ const ProductSlider = ({ product }) => {
             />
           </SwiperSlide>
         ))}
+
         {product?.review && (
           <SwiperSlide>
             <div className="iframe-wrapper relative">
@@ -94,35 +130,7 @@ const ProductSlider = ({ product }) => {
                   onClick={() => setIframeOverlayHidden(true)}
                 />
               )}
-              <div
-                onClick={() =>
-                  setTimeout(() => setIframeOverlayHidden(false), 100)
-                }
-              >
-                <iframe
-                  width="100%"
-                  height="100%"
-                  src={`https://www.youtube.com/embed/${getYouTubeId(
-                    product.review
-                  )}`}
-                  title="YouTube video player"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="image"
-                />
-              </div>
-            </div>
-          </SwiperSlide>
-        )}{" "}
-        {product?.rutubeReview && (
-          <SwiperSlide>
-            <div className="iframe-wrapper relative">
-              {!iframeOverlayHidden && (
-                <div
-                  className="iframe-overlay"
-                  onClick={() => setIframeOverlayHidden(true)}
-                />
-              )}
+
               <div
                 onClick={() =>
                   setTimeout(() => setIframeOverlayHidden(false), 100)
@@ -157,10 +165,10 @@ const ProductSlider = ({ product }) => {
         modules={[FreeMode, Navigation, Thumbs, Mousewheel]}
         className="mySwiper2 pt-2"
       >
-        <SwiperSlide style={{ marginRight: "10px !important" }}>
+        <SwiperSlide>
           <img
-            src={`https://api.toymarket.site/api/image/${product?.id}/${product?.photo}`}
-            alt={`thumb-${product?.id}`}
+            src={mainImageUrl}
+            alt={`thumb-${productId}`}
             className="image"
             onError={(e) => {
               e.currentTarget.src = noImg;
@@ -169,11 +177,11 @@ const ProductSlider = ({ product }) => {
           />
         </SwiperSlide>
 
-        {product?.otherPhotos?.filter(Boolean).map((slide, i) => (
-          <SwiperSlide key={i}>
+        {moreImages.map((index) => (
+          <SwiperSlide key={index}>
             <img
-              src={`https://api.toymarket.site/api/product_other_image/${product?.id}/${slide}`}
-              alt={`thumb-${product?.id}-${i}`}
+              src={getMoreImageUrl(index)}
+              alt={`thumb-${productId}-${index}`}
               className="image"
               onError={(e) => {
                 e.currentTarget.src = noImg;
@@ -187,6 +195,7 @@ const ProductSlider = ({ product }) => {
           <SwiperSlide>
             <div className="iframe-wrapper relative">
               {!iframeOverlayHidden && <div className="iframe-overlay" />}
+
               <iframe
                 width="100%"
                 height="100%"

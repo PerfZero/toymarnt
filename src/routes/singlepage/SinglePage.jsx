@@ -247,10 +247,10 @@ function SinglePage() {
         map.set(colorKey, {
           color: colorKey,
           textColor: getColorName(item),
-          img: item?.photo
-            ? `https://api.toymarket.site/api/image/${item.id}/${item.photo}`
+          img: item?.id
+            ? `https://api.toymarket.site/assets/products/${product.id}/image`
             : item?.image
-            ? `https://api.toymarket.site/api/image/${item.id}/${item.image}`
+            ? `https://api.toymarket.site/assets/products/${product.id}/image`
             : "",
           product: item,
         });
