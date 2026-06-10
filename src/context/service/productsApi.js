@@ -5,7 +5,7 @@ export const productsApi = api.injectEndpoints({
     getProductsByType: builder.query({
       query: ({ id, limit, offset }) => ({
         url:
-          "https://api.toymarket.site/products?type_ids=" +
+          "https://api.toymarket.site/products?type=" +
           id +
           (limit ? "&limit=" + limit : "") +
           (offset ? "&offset=" + offset : ""),
@@ -16,7 +16,7 @@ export const productsApi = api.injectEndpoints({
     getProductsBySubcategoryId: builder.query({
       query: ({ id, limit, offset }) => ({
         url:
-          "https://api.toymarket.site/products?subcategory_ids=" +
+          "https://api.toymarket.site/products?subcategory=" +
           id +
           (limit ? "&limit=" + limit : "") +
           (offset ? "&offset=" + offset : ""),
@@ -26,7 +26,7 @@ export const productsApi = api.injectEndpoints({
 
     getProductsForSinglePage: builder.query({
       query: (id) => ({
-        url: "https://api.toymarket.site/products?type_ids=" + id,
+        url: "https://api.toymarket.site/products?type=" + id,
         method: "GET",
       }),
     }),
@@ -34,7 +34,7 @@ export const productsApi = api.injectEndpoints({
     getProductsByTypeWithLimit: builder.query({
       query: ({ id, limit, offset }) => ({
         url:
-          "https://api.toymarket.site/products?category_ids=" +
+          "https://api.toymarket.site/products?category=" +
           id +
           (limit ? "&limit=" + limit : "") +
           (offset ? "&offset=" + offset : ""),
@@ -45,7 +45,7 @@ export const productsApi = api.injectEndpoints({
     getProductsByCategoryNameWithLimit: builder.query({
       query: ({ id, limit, offset }) => ({
         url:
-          "https://api.toymarket.site/products?category_ids=" +
+          "https://api.toymarket.site/products?category=" +
           id +
           "&limit=" +
           limit +
@@ -57,7 +57,7 @@ export const productsApi = api.injectEndpoints({
     getNewProducts: builder.query({
       query: (limit, offset, inStock) => ({
         url:
-          "https://api.toymarket.site/products?category_ids=-1" +
+          "https://api.toymarket.site/products?category=-1" +
           (limit ? `&limit=${limit}` : "") +
           (offset ? `&offset=${offset}` : "") +
           (inStock ? `&in_stock=${inStock}` : ""),
@@ -68,7 +68,7 @@ export const productsApi = api.injectEndpoints({
     getNewProductsLazy: builder.query({
       query: ({ limit, offset, inStock }) => ({
         url:
-          "https://api.toymarket.site/products?category_ids=-1" +
+          "https://api.toymarket.site/products?category=-1" +
           (limit ? `&limit=${limit}` : "") +
           (offset ? `&offset=${offset}` : "") +
           (inStock ? `&in_stock=${inStock}` : ""),

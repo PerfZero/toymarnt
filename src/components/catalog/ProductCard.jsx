@@ -74,7 +74,7 @@ export const getMarketingPrice = (product) =>
 
 export const getQuantitySteps = (product) =>
   Number(
-    product?.quantity_steps ??
+    product?.recommended_order_quantity ??
       product?.quantitySteps ??
       product?.min_quantity ??
       product?.minQuantity ??
@@ -82,15 +82,15 @@ export const getQuantitySteps = (product) =>
   );
 
 export const isRshzEnabled = (product) => {
-  return Boolean(product.primary_price == "retail");
+  return Boolean(product.recommended_order_quantity > 0 ?? false);
 };
 
 export const getPrice = (product) => {
   const retailPrice = getRetailPrice(product);
   const marketingPrice = getMarketingPrice(product);
 
-  if (isRshzEnabled(product) && marketingPrice) {
-    return marketingPrice;
+  if (isRshzEnabled(product)) {
+    return marketingPrice || retailPrice;
   }
 
   return retailPrice;
@@ -206,7 +206,6 @@ function ProductCard({ products = [] }) {
 
   const finalPrice = getPrice(product);
   const stock = getStock(product);
-  const availabilityId = getAvailabilityId(product);
   const canBuySelectedProduct = canBuyProduct(product);
 
   if (!finalPrice) return null;
@@ -305,15 +304,9 @@ function ProductCard({ products = [] }) {
       <div>
         {stock > 0 ? <p className="weight">Осталось: {stock} шт</p> : null}
 
-        {rshzEnabled && quantitySteps && marketingPrice ? (
+        {rshzEnabled && quantitySteps && retailPrice ? (
           <p className="weight">
-            от {quantitySteps} ед. - {formatNumber(marketingPrice)} ₽
-          </p>
-        ) : null}
-
-        {rshzEnabled && retailPrice ? (
-          <p className="weight">
-           от {product.quantity_steps} шт {formatNumber(retailPrice)} ₽
+            от {quantitySteps} шт по {formatNumber(retailPrice)} ₽
           </p>
         ) : null}
       </div>
