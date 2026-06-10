@@ -82,7 +82,7 @@ export const getQuantitySteps = (product) =>
   );
 
 export const isRshzEnabled = (product) => {
-  return Boolean(product.recommended_order_quantity > 0 ?? false);
+  return Boolean(product.primary_price != "retail" ?? false);
 };
 
 export const getPrice = (product) => {
