@@ -173,7 +173,8 @@
   top: 50%;
   transform: translate(-50%, -50%);
   transition: height 0.2s linear;
-  width: 415px;
+  max-width: 415px;
+  width: 100%;
   z-index: 15;
   background: #363636;
   color: #fff;

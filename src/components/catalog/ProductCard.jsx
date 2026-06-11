@@ -239,6 +239,9 @@ function ProductCard({ products = [] }) {
     );
   };
 
+  if (!canShowGroup(variants)) return null;
+  if (variants.length > 1 && !variants.some(canBuyProduct)) return null;
+
   return (
     <div className="catalogItem_card">
       <Link className="product-img-link" to={`/item/${getModelId(product)}`}>
