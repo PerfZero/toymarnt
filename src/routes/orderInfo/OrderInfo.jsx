@@ -23,8 +23,30 @@ function OrderInfo() {
   const dispatch = useDispatch();
   let { id } = useParams();
   let userInfo = useSelector((state) => state.cart.userInfo);
-  let singleOrder =
-    userInfo?.orders?.find((order) => +order.orderId === +id) || {};
+  const normalizeOrder = (order) => ({
+    ...order,
+    orderId: order?.orderId ?? order?.order_id,
+    orderDate: order?.orderDate ?? order?.date ?? order?.order_date,
+    statusName: order?.statusName ?? order?.status_name ?? order?.status,
+    deliveryMethod: order?.deliveryMethod ?? order?.delivery_method ?? order?.delivery,
+    total: order?.total ?? order?.amount,
+    code: order?.code ?? order?.access_code,
+    products: (order?.products ?? order?.items ?? []).map((p) => ({
+      ...p,
+      productID: p?.productID ?? p?.product_id ?? p?.id,
+      productTypeID: p?.productTypeID ?? p?.product_type_id ?? p?.type_id,
+      shoeSizeName: p?.shoeSizeName ?? p?.shoe_size_name ?? p?.size,
+      textColor: p?.textColor ?? p?.text_color ?? p?.color,
+      discountedPrice: p?.discountedPrice ?? p?.retail_price ?? p?.price,
+    })),
+  });
+
+  let singleOrder = normalizeOrder(
+    userInfo?.orders?.find((order) => {
+      const orderId = order?.orderId ?? order?.order_id;
+      return Number(orderId) === Number(id);
+    }) || {}
+  );
   let singleOrder_products = singleOrder?.products || [];
 
   console.log(singleOrder.code);

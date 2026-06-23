@@ -15,27 +15,38 @@ function Home() {
     return Number(product.quantity);
   };
 
+  const getRetailPrice = (product) =>
+    Number(product?.retail_price ?? product?.discountedPrice ?? 0);
+
+  const getMarketingPrice = (product) =>
+    Number(product?.marketing_price ?? product?.price ?? 0);
+
   const getCurrentPrice = (product) => {
     const displayQuantity = getDisplayQuantity(product);
 
     if (
-      (displayQuantity >= (+product.recomendedMinimalSize || Infinity) &&
-        product.discountedPrice) ||
-      product.recomendedMinimalSizeEnabled == false ||
-      product.recomendedMinimalSize == 0 ||
-      product.recomendedMinimalSize == 1
+      (displayQuantity >= Number(product?.recomendedMinimalSize ?? product?.recommended_order_quantity ?? Infinity) &&
+        getRetailPrice(product)) ||
+      product?.recomendedMinimalSizeEnabled === false ||
+      Number(product?.recomendedMinimalSize ?? product?.recommended_order_quantity ?? 1) <= 1
     ) {
-      return Number(product.discountedPrice); // Chegirmali narx
+      return getRetailPrice(product);
     }
-    return Number(product.price); // Asl narx
+    return getMarketingPrice(product);
   };
 
   useEffect(() => {
     const totalPrice = cart?.reduce((acc, product) => {
       const displayQuantity = getDisplayQuantity(product);
+      const availabilityId = Number(
+        product?.accessabilitySettingsID ??
+          (product?.availability === "needs_preorder" ? 223
+          : product?.availability === "always_available" ? 224
+          : 222)
+      );
       const currentPrice =
-        product.accessabilitySettingsID == 223
-          ? product.prepayAmount
+        availabilityId === 223
+          ? Number(product?.prepayAmount ?? product?.prepay_amount ?? 0)
           : getCurrentPrice(product);
 
       acc += displayQuantity * currentPrice;

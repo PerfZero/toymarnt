@@ -5,7 +5,7 @@ export const productsApi = api.injectEndpoints({
     getProductsByType: builder.query({
       query: ({ id, limit, offset }) => ({
         url:
-          "https://api.toymarket.site/products?type=" +
+          "/products?type=" +
           id +
           (limit ? "&limit=" + limit : "") +
           (offset ? "&offset=" + offset : ""),
@@ -16,7 +16,7 @@ export const productsApi = api.injectEndpoints({
     getProductsBySubcategoryId: builder.query({
       query: ({ id, limit, offset }) => ({
         url:
-          "https://api.toymarket.site/products?subcategory=" +
+          "/products?subcategory=" +
           id +
           (limit ? "&limit=" + limit : "") +
           (offset ? "&offset=" + offset : ""),
@@ -26,7 +26,7 @@ export const productsApi = api.injectEndpoints({
 
     getProductsForSinglePage: builder.query({
       query: (id) => ({
-        url: "https://api.toymarket.site/products?type=" + id,
+        url: "/products?type=" + id,
         method: "GET",
       }),
     }),
@@ -34,7 +34,7 @@ export const productsApi = api.injectEndpoints({
     getProductsByTypeWithLimit: builder.query({
       query: ({ id, limit, offset }) => ({
         url:
-          "https://api.toymarket.site/products?category=" +
+          "/products?category=" +
           id +
           (limit ? "&limit=" + limit : "") +
           (offset ? "&offset=" + offset : ""),
@@ -45,7 +45,7 @@ export const productsApi = api.injectEndpoints({
     getProductsByCategoryNameWithLimit: builder.query({
       query: ({ id, limit, offset }) => ({
         url:
-          "https://api.toymarket.site/products?category=" +
+          "/products?category=" +
           id +
           "&limit=" +
           limit +
@@ -55,9 +55,9 @@ export const productsApi = api.injectEndpoints({
     }),
 
     getNewProducts: builder.query({
-      query: (limit, offset, inStock) => ({
+      query: ({ limit, offset, inStock }) => ({
         url:
-          "https://api.toymarket.site/products?category=-1" +
+          "/products?category=-1" +
           (limit ? `&limit=${limit}` : "") +
           (offset ? `&offset=${offset}` : "") +
           (inStock ? `&in_stock=${inStock}` : ""),
@@ -68,7 +68,7 @@ export const productsApi = api.injectEndpoints({
     getNewProductsLazy: builder.query({
       query: ({ limit, offset, inStock }) => ({
         url:
-          "https://api.toymarket.site/products?category=-1" +
+          "/products?category=-1" +
           (limit ? `&limit=${limit}` : "") +
           (offset ? `&offset=${offset}` : "") +
           (inStock ? `&in_stock=${inStock}` : ""),
@@ -77,29 +77,32 @@ export const productsApi = api.injectEndpoints({
     }),
 
     getProductsBySearch: builder.query({
-      query: (value) => ({
-        url: "https://api.toymarket.site/products?query=name=" + value,
-        method: "GET",
-      }),
+      query: (value) => {
+        const query = value ? `'"${value}"'` : "";
+        return {
+          url: "/products?query=" + encodeURIComponent(query),
+          method: "GET",
+        };
+      },
     }),
 
     getCategories: builder.query({
       query: () => ({
-        url: "https://api.toymarket.site/products/categories?exists=1",
+        url: "/products/categories?exists=1",
         method: "GET",
       }),
     }),
 
     getProductsById: builder.query({
       query: (value) => ({
-        url: "https://api.toymarket.site/products?query=id=" + value,
+        url: "/products?query=id==" + value,
         method: "GET",
       }),
     }),
 
     getPickupPoints: builder.query({
       query: () => ({
-        url: "https://api.toymarket.site/pickup-points",
+        url: "/pickup-points",
         method: "GET",
       }),
     }),
@@ -107,7 +110,7 @@ export const productsApi = api.injectEndpoints({
     getProductsByBrand: builder.query({
       query: ({ id, limit, offset }) => ({
         url:
-          "https://api.toymarket.site/products?query=tradeMarkID=" +
+          "/products?query=brand_id==" +
           id +
           (limit ? "&limit=" + limit : "") +
           (offset ? "&offset=" + offset : ""),

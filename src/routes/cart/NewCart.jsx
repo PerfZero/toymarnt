@@ -694,7 +694,7 @@ const NewCart = () => {
                   <span>Выберите пункт выдачи заказа:</span>
 
                   {pickupPoints.map((item) =>
-                    item.pickupPointStatus ? (
+                    item.is_pickup_point ?? item.pickupPointStatus ? (
                       <div
                         key={item.id}
                         onClick={() => {
@@ -768,7 +768,7 @@ const NewCart = () => {
                   !paymentDelivered && (
                     <li>
                       <p>
-                        Срок хранения заказа: {selectedPickup.deliveryTime} дн.
+                        Срок хранения заказа: {selectedPickup.pending_order_time ?? selectedPickup.deliveryTime} дн.
                       </p>
                     </li>
                   )}

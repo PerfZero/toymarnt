@@ -1,0 +1,60 @@
+name: Deploy to Beget
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: CI=false npm run build
+
+      - name: Install SSH tools
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Package build
+        run: tar -C build -czf build.tgz .
+
+      - name: Deploy
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          REMOTE_ARCHIVE: /home/z/zordenl3/toymarket-build-${{ github.sha }}.tgz
+        run: |
+          set -euo pipefail
+
+          ssh-keyscan -t ed25519 "$DEPLOY_HOST" > known_hosts
+
+          SSHPASS="$DEPLOY_PASSWORD" sshpass -e scp \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile=known_hosts \
+            build.tgz "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_ARCHIVE"
+
+          SSHPASS="$DEPLOY_PASSWORD" sshpass -e ssh \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile=known_hosts \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "set -eu; target='$DEPLOY_PATH'; archive='$REMOTE_ARCHIVE'; test -d \"\$target\"; find \"\$target\" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +; tar -xzf \"\$archive\" -C \"\$target\"; rm -f \"\$archive\"; find \"\$target\" -name '._*' -delete"

@@ -5,13 +5,13 @@ const getProducts = async () => {
   const req = await fetch("https://api.toymarket.site/products");
   const res = await req.json();
 
-  return res.data;
+  return Array.isArray(res) ? res : res?.data ?? res;
 };
 const getProductsByType = async (id) => {
   const req = await fetch("https://api.toymarket.site/products?type=" + id);
   const res = await req.json();
 
-  return res.data;
+  return Array.isArray(res) ? res : res?.data ?? res;
 };
 const getProductsById = async (id) => {
   try {
@@ -34,7 +34,7 @@ const getProductsByTypeWithLimit = async (id, limit) => {
   );
   const res = await req.json();
 
-  return res.data;
+  return Array.isArray(res) ? res : res?.data ?? res;
 };
 
 const getNewProducts = async (limit) => {
@@ -43,16 +43,17 @@ const getNewProducts = async (limit) => {
   );
   const res = await req.json();
 
-  return res.data;
+  return Array.isArray(res) ? res : res?.data ?? res;
 };
 
 const getProductsBySearch = async (value) => {
+  const query = value ? `'"${value}"'` : "";
   const req = await fetch(
-    "https://api.toymarket.site/products?query=name=" + value
+    "https://api.toymarket.site/products?query=" + encodeURIComponent(query)
   );
   const res = await req.json();
 
-  return res.data;
+  return Array.isArray(res) ? res : res?.data ?? res;
 };
 
 const getUser = async () => {
@@ -127,7 +128,8 @@ const getSingleProduct = async (id) => {
   });
   const res = await req.json();
 
-  return res.data?.length > 0 ? res.data[0] : res.data;
+  const data = Array.isArray(res) ? res : res?.data ?? res;
+  return Array.isArray(data) ? data[0] : data;
 };
 
 const getCategories = async () => {
@@ -140,7 +142,7 @@ const getCategories = async () => {
   });
   const res = await req.json();
 
-  return res.data;
+  return Array.isArray(res) ? res : res?.data ?? res;
 };
 
 const api = axios.create({

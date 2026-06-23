@@ -14,6 +14,8 @@ import { BiPlus } from "react-icons/bi";
 import ProductCard, {
   getGroupKey,
   canShowGroup,
+  getStock,
+  getPrice,
 } from "../../components/catalog/ProductCard";
 
 function BrandProducts() {
@@ -98,20 +100,20 @@ function BrandProducts() {
     let result = [...products];
 
     if (pendingFilters.status === "inStock") {
-      result = result.filter((product) => product.inStock > 0);
+      result = result.filter((product) => getStock(product) > 0);
     } else if (pendingFilters.status === "outOfStock") {
-      result = result.filter((product) => product.inStock === 0);
+      result = result.filter((product) => getStock(product) === 0);
     }
 
     if (pendingFilters.priceFrom) {
       result = result.filter(
-        (product) => +product.price >= +pendingFilters.priceFrom
+        (product) => getPrice(product) >= Number(pendingFilters.priceFrom)
       );
     }
 
     if (pendingFilters.priceTo) {
       result = result.filter(
-        (product) => +product.price <= +pendingFilters.priceTo
+        (product) => getPrice(product) <= Number(pendingFilters.priceTo)
       );
     }
 

@@ -10,7 +10,13 @@ import { useGoBackOrHome } from "../../utils/goBackOrHome";
 function Order() {
   const nav = useNavigate();
   let userInfo = useSelector((state) => state.cart.userInfo);
-  let ordersStory = userInfo?.orders;
+  let ordersStory = (userInfo?.orders || []).map((order) => ({
+    ...order,
+    orderId: order?.orderId ?? order?.order_id,
+    orderDate: order?.orderDate ?? order?.date ?? order?.order_date,
+    statusName: order?.statusName ?? order?.status_name ?? order?.status,
+    total: order?.total ?? order?.amount,
+  }));
   const back = useGoBackOrHome();
 
   const customDate = (orderDate) => {
