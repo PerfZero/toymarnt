@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { useDispatch } from "react-redux";
@@ -25,6 +25,7 @@ import BrandProducts from "./routes/categoryProducts/BrandProducts";
 function App() {
   const dispatch = useDispatch();
   const location = useLocation();
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   const isAuthPage = location.pathname === "/auth";
   const user = localStorage.getItem("user");
@@ -42,25 +43,25 @@ function App() {
     const protectedRoutes = ["/cart", "/orders", "/orderInfo"];
 
     const isProtectedRoute = protectedRoutes.some((route) =>
-      location.pathname.startsWith(route)
+      location.pathname.startsWith(route),
     );
 
-    if (!user && isProtectedRoute) {
+    const isTMA = !!window.Telegram?.WebApp?.initData;
+
+    if (!user && isProtectedRoute && !isTMA) {
       window.location.href = "/auth";
       return;
     }
 
-    if (user && isProtectedRoute) {
-      const fetchData = async () => {
+    (async () => {
+      if ((user || isTMA) && isProtectedRoute) {
         const userData = await getToken();
-
         if (userData) {
           dispatch(setUserInfo(userData));
         }
-      };
-
-      fetchData();
-    }
+      }
+      setIsAuthReady(true);
+    })();
   }, [location.pathname, dispatch, user]);
 
   return (
@@ -70,21 +71,25 @@ function App() {
 
         {!isAuthPage && <Header />}
 
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/item/:id" element={<SinglePage />} />
-          <Route path="/cart" element={<NewCart />} />
-          <Route path="/orders" element={<Order />} />
-          <Route path="/orderInfo/:id" element={<OrderInfo />} />
-          <Route path="/cat/:id" element={<CategoryProducts />} />
-          <Route path="/type/:id" element={<TypesProducts />} />
-          <Route path="/subcat/:id" element={<BySubcategories />} />
-          <Route path="/brand/:id" element={<BrandProducts />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/new" element={<News />} />
-          <Route path="/auth" element={<AuthTelegram />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        {isAuthReady ? (
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/item/:id" element={<SinglePage />} />
+            <Route path="/cart" element={<NewCart />} />
+            <Route path="/orders" element={<Order />} />
+            <Route path="/orderInfo/:id" element={<OrderInfo />} />
+            <Route path="/cat/:id" element={<CategoryProducts />} />
+            <Route path="/type/:id" element={<TypesProducts />} />
+            <Route path="/subcat/:id" element={<BySubcategories />} />
+            <Route path="/brand/:id" element={<BrandProducts />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/new" element={<News />} />
+            <Route path="/auth" element={<AuthTelegram />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        ) : (
+          <div className="auth-loading" />
+        )}
 
         {!isAuthPage && <Footer />}
       </HelmetProvider>

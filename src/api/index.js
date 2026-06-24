@@ -83,13 +83,12 @@ const getUser = async () => {
 };
 
 const newOrder = async (data) => {
-  const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
   const req = await fetch("https://api.toymarket.site/order/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : { authorization: "WebApp" }),
+      authorization: "WebApp",
     },
     body: JSON.stringify({
       tgUserData: user,
@@ -102,14 +101,13 @@ const newOrder = async (data) => {
 };
 
 const payTBank = async (orderID) => {
-  const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
 
   const req = await fetch(`https://api.toymarket.site/payment/tbank/init/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : { authorization: "WebApp" }),
+      authorization: "WebApp",
     },
     body: JSON.stringify({
       tgUserData: user,
@@ -152,16 +150,19 @@ const api = axios.create({
   withCredentials: true,
 });
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
 export const getToken = async () => {
   try {
+    // В Telegram Mini App — через initData
+    if (window.Telegram?.WebApp?.initData) {
+      const response = await axios.post(
+        "https://api.toymarket.site/auth/login/telegram/miniapp",
+        { data: window.Telegram.WebApp.initData },
+        { withCredentials: true },
+      );
+      return response.data;
+    }
+
+    // В браузере — через данные виджета
     const user = JSON.parse(localStorage.getItem("user"));
 
     const response = await axios.post(
@@ -171,14 +172,10 @@ export const getToken = async () => {
       },
       {
         withCredentials: true,
-      }
+      },
     );
 
-    const data = response.data;
-    if (data?.token) {
-      localStorage.setItem("token", data.token);
-    }
-    return data;
+    return response.data;
   } catch (err) {
     toast.error("Не удалось войти в систему, попробуйте снова.");
     localStorage.removeItem("user");
