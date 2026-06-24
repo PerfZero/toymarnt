@@ -83,12 +83,13 @@ const getUser = async () => {
 };
 
 const newOrder = async (data) => {
+  const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
   const req = await fetch("https://api.toymarket.site/order/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      authorization: "WebApp",
+      ...(token ? { Authorization: `Bearer ${token}` } : { authorization: "WebApp" }),
     },
     body: JSON.stringify({
       tgUserData: user,
@@ -101,13 +102,14 @@ const newOrder = async (data) => {
 };
 
 const payTBank = async (orderID) => {
+  const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user"));
 
   const req = await fetch(`https://api.toymarket.site/payment/tbank/init/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      authorization: "WebApp",
+      ...(token ? { Authorization: `Bearer ${token}` } : { authorization: "WebApp" }),
     },
     body: JSON.stringify({
       tgUserData: user,
@@ -150,6 +152,14 @@ const api = axios.create({
   withCredentials: true,
 });
 
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export const getToken = async () => {
   try {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -164,7 +174,11 @@ export const getToken = async () => {
       }
     );
 
-    return response.data;
+    const data = response.data;
+    if (data?.token) {
+      localStorage.setItem("token", data.token);
+    }
+    return data;
   } catch (err) {
     toast.error("Не удалось войти в систему, попробуйте снова.");
     localStorage.removeItem("user");
@@ -174,12 +188,7 @@ export const getToken = async () => {
 };
 
 export const getCart = async () => {
-  const response = await api.get("/cart", {
-    withCredentials: true,
-    headers: {
-      authorization: `WebApp`,
-    },
-  });
+  const response = await api.get("/cart");
   return response.data;
 };
 
@@ -199,37 +208,20 @@ export const addCartItem = async ({ product_id, quantity = 1 }) => {
 };
 
 export const updateCartItemQuantity = async ({ product_id, quantity }) => {
-  const response = await api.patch(
-    `/cart/${product_id}`,
-    {
-      quantity,
-    },
-    {
-      withCredentials: true,
-      headers: {
-        authorization: `WebApp`,
-      },
-    }
-  );
+  const response = await api.patch(`/cart/${product_id}`, {
+    quantity,
+  });
 
   return response.data;
 };
 
 export const removeCartItem = async (product_id) => {
-  const response = await api.delete(`/cart/${product_id}`, {
-    headers: {
-      authorization: `WebApp`,
-    },
-  });
+  const response = await api.delete(`/cart/${product_id}`);
   return response.data;
 };
 
 export const clearServerCart = async () => {
-  const response = await api.delete("/cart", {
-    headers: {
-      authorization: `WebApp`,
-    },
-  });
+  const response = await api.delete("/cart");
   return response.data;
 };
 
