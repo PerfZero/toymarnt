@@ -36,6 +36,12 @@ function App() {
       tg.ready();
       tg.expand();
       document.body.classList.add("telegram-webapp");
+
+      // Применяем safe area только если оно реально есть
+      const topInset = tg.contentSafeAreaInset?.top;
+      if (topInset && topInset > 0) {
+        document.body.style.setProperty("--safe-top", `${topInset}px`);
+      }
     }
   }, []);
 
