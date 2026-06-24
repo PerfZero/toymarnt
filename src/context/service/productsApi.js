@@ -5,7 +5,7 @@ export const productsApi = api.injectEndpoints({
     getProductsByType: builder.query({
       query: ({ id, limit, offset }) => ({
         url:
-          "/products?type=" +
+          "/products?type_ids=" +
           id +
           (limit ? "&limit=" + limit : "") +
           (offset ? "&offset=" + offset : ""),
@@ -16,7 +16,7 @@ export const productsApi = api.injectEndpoints({
     getProductsBySubcategoryId: builder.query({
       query: ({ id, limit, offset }) => ({
         url:
-          "/products?subcategory=" +
+          "/products?subcategory_ids=" +
           id +
           (limit ? "&limit=" + limit : "") +
           (offset ? "&offset=" + offset : ""),
@@ -26,7 +26,7 @@ export const productsApi = api.injectEndpoints({
 
     getProductsForSinglePage: builder.query({
       query: (id) => ({
-        url: "/products?type=" + id,
+        url: "/products?type_ids=" + id,
         method: "GET",
       }),
     }),
@@ -34,7 +34,7 @@ export const productsApi = api.injectEndpoints({
     getProductsByTypeWithLimit: builder.query({
       query: ({ id, limit, offset }) => ({
         url:
-          "/products?category=" +
+          "/products?category_ids=" +
           id +
           (limit ? "&limit=" + limit : "") +
           (offset ? "&offset=" + offset : ""),
@@ -45,7 +45,7 @@ export const productsApi = api.injectEndpoints({
     getProductsByCategoryNameWithLimit: builder.query({
       query: ({ id, limit, offset }) => ({
         url:
-          "/products?category=" +
+          "/products?category_ids=" +
           id +
           "&limit=" +
           limit +
@@ -57,7 +57,7 @@ export const productsApi = api.injectEndpoints({
     getNewProducts: builder.query({
       query: ({ limit, offset, inStock }) => ({
         url:
-          "/products?category=-1" +
+          "/products?is_new=true" +
           (limit ? `&limit=${limit}` : "") +
           (offset ? `&offset=${offset}` : "") +
           (inStock ? `&in_stock=${inStock}` : ""),
@@ -68,7 +68,7 @@ export const productsApi = api.injectEndpoints({
     getNewProductsLazy: builder.query({
       query: ({ limit, offset, inStock }) => ({
         url:
-          "/products?category=-1" +
+          "/products?is_new=true" +
           (limit ? `&limit=${limit}` : "") +
           (offset ? `&offset=${offset}` : "") +
           (inStock ? `&in_stock=${inStock}` : ""),
