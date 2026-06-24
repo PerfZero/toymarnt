@@ -145,22 +145,6 @@ const getCategories = async () => {
   return Array.isArray(res) ? res : res?.data ?? res;
 };
 
-const parseInitData = (initData) => {
-  const params = new URLSearchParams(initData);
-  const raw = params.get("user");
-  if (!raw) return null;
-  const user = JSON.parse(decodeURIComponent(raw));
-  return {
-    id: user.id,
-    first_name: user.first_name || "",
-    last_name: user.last_name || "",
-    username: user.username,
-    auth_date: Number(params.get("auth_date")),
-    photo_url: user.photo_url,
-    hash: params.get("hash"),
-  };
-};
-
 const api = axios.create({
   baseURL: "https://api.toymarket.site/",
   withCredentials: true,
@@ -168,15 +152,11 @@ const api = axios.create({
 
 export const getToken = async () => {
   try {
-    // В Telegram Mini App — парсим initData и шлём как widget-login
+    // В Telegram Mini App — через initData
     if (window.Telegram?.WebApp?.initData) {
-      const userData = parseInitData(window.Telegram.WebApp.initData);
-      if (!userData) {
-        throw new Error("No user data in initData");
-      }
       const response = await axios.post(
-        "https://api.toymarket.site/auth/login/telegram/widget",
-        { data: userData },
+        "https://api.toymarket.site/auth/login/telegram/miniapp",
+        { data: window.Telegram.WebApp.initData },
         { withCredentials: true },
       );
       return response.data;
