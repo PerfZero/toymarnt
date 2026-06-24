@@ -212,6 +212,8 @@ function SinglePage() {
           ? payload
           : Array.isArray(payload?.products)
           ? payload.products
+          : payload
+          ? [payload]
           : [];
 
         const normalizedProducts = responseProducts.map(normalizeProduct);
