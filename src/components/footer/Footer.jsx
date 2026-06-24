@@ -3,8 +3,8 @@ import logo from "../../img/logo.png";
 import "./Footer.css";
 function Footer() {
   return (
-    <footer className="container">
-      <div className="footer">
+    <footer>
+      <div className="footer-inner">
         <img src={logo} className="logoIcon" alt="logoIcon" />
 
         <div className="phone">
