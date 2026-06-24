@@ -30,9 +30,10 @@ function App() {
   const user = localStorage.getItem("user");
 
   useEffect(() => {
-    if (window.Telegram && window.Telegram.WebApp) {
-      window.Telegram.WebApp.ready();
-      window.Telegram.WebApp.expand();
+    const tg = window.Telegram?.WebApp;
+    if (tg && tg.initData) {
+      tg.ready();
+      tg.expand();
       document.body.classList.add("telegram-webapp");
     }
   }, []);
