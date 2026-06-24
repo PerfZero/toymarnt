@@ -243,6 +243,7 @@ function OrderInfo() {
                 >
                   <img
                     src={`https://api.toymarket.site/assets/products/${product.id}/image`}
+                    loading="lazy"
                     alt="picture"
                     onError={(e) => {
                       e.currentTarget.src = noImg;

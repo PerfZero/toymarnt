@@ -113,6 +113,7 @@ const ProductSlider = ({ product }) => {
               src={getMoreImageUrl(index)}
               alt={`image-${productId}-${index}`}
               className="image"
+              loading="lazy"
               onError={(e) => {
                 e.currentTarget.src = noImg;
                 e.currentTarget.style.objectFit = "cover";
@@ -170,6 +171,7 @@ const ProductSlider = ({ product }) => {
             src={mainImageUrl}
             alt={`thumb-${productId}`}
             className="image"
+            loading="lazy"
             onError={(e) => {
               e.currentTarget.src = noImg;
               e.currentTarget.style.objectFit = "cover";
@@ -183,6 +185,7 @@ const ProductSlider = ({ product }) => {
               src={getMoreImageUrl(index)}
               alt={`thumb-${productId}-${index}`}
               className="image"
+              loading="lazy"
               onError={(e) => {
                 e.currentTarget.src = noImg;
                 e.currentTarget.style.objectFit = "cover";

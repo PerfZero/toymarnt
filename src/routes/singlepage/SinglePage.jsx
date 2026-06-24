@@ -517,7 +517,7 @@ function SinglePage() {
                       }}
                     >
                       {color.img ? (
-                        <img src={color.img} alt="" />
+                        <img src={color.img} loading="lazy" alt="" />
                       ) : (
                         <span>{color.textColor}</span>
                       )}

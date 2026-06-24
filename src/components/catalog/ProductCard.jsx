@@ -257,6 +257,7 @@ function ProductCard({ products = [] }) {
         <img
           src={imageSrc}
           alt={product.article || product.name}
+          loading="lazy"
           onError={(e) => {
             e.currentTarget.src = noImg;
           }}

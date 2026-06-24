@@ -497,6 +497,7 @@ const NewCart = () => {
                           ? `https://api.toymarket.site/assets/products/${product.id}/image`
                           : noImg
                       }
+                      loading="lazy"
                       alt="product"
                       onError={(e) => {
                         e.currentTarget.src = noImg;
