@@ -63,7 +63,7 @@ body,
   max-height: 100vh;
 }
 
-body.telegram-webapp .container {
+body.telegram-webapp {
   margin-top: 75px;
 }
 
