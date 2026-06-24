@@ -64,7 +64,7 @@ body,
 }
 
 body.telegram-webapp {
-  padding-top: 120px;
+  padding-top: var(--tg-content-safe-area-inset-top, 120px);
 }
 
 .sidebar-backdrop {
