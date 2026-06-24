@@ -37,10 +37,12 @@ function App() {
       tg.expand();
       document.body.classList.add("telegram-webapp");
 
-      // Применяем safe area только если оно реально есть
-      const topInset = tg.contentSafeAreaInset?.top;
-      if (topInset && topInset > 0) {
-        document.body.style.setProperty("--safe-top", `${topInset}px`);
+      // Суммируем safe area устройства (notch) + safe area контента (шапка Telegram)
+      const deviceTop = tg.safeAreaInset?.top ?? 0;
+      const contentTop = tg.contentSafeAreaInset?.top ?? 0;
+      const totalTop = deviceTop + contentTop;
+      if (totalTop > 0) {
+        document.body.style.setProperty("--safe-top", `${totalTop}px`);
       }
     }
   }, []);
