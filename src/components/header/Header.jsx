@@ -171,7 +171,7 @@ export const Header = () => {
               </p>
 
               {openIndex === i &&
-                category?.sub_categories?.map((subCategory, j) => (
+                category?.subcategories?.map((subCategory, j) => (
                   <div className="subcategory_block" key={j}>
                     <p
                       onClick={() => {
