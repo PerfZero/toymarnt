@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom"; // useLocation import
 import { useDispatch, useSelector } from "react-redux";
 import { setSearchQuery } from "../../context/searchSlice";
+import { FiX } from "react-icons/fi";
 import menuIcon from "../../img/menu.svg";
 import logo from "../../img/logo.png";
 import arrowIcon from "../../img/arrow-right.svg";
@@ -126,14 +127,10 @@ export const Header = () => {
           </div>
         </div>
 
-        <div className={`menuIcon ${openSidebar && "activeIcon"}`}>
-          <img src={menuIcon} alt="" onClick={handleSidebarToggle} />
+        <div className={`menuIcon ${openSidebar && "activeIcon"}`} onClick={handleSidebarToggle}>
+          {openSidebar ? <FiX size={24} color="#fff" /> : <img src={menuIcon} alt="" />}
         </div>
       </div>
-
-      {openSidebar ? (
-        <div className="sidebar-backdrop" onClick={handleSidebarToggle} />
-      ) : null}
 
       {openSidebar ? (
         <div className="dropdown" ref={dropdownRef}>
