@@ -132,6 +132,10 @@ export const Header = () => {
       </div>
 
       {openSidebar ? (
+        <div className="sidebar-backdrop" onClick={handleSidebarToggle} />
+      ) : null}
+
+      {openSidebar ? (
         <div className="dropdown" ref={dropdownRef}>
           <div
             className="item"

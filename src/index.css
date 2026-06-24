@@ -46,16 +46,11 @@ body,
 #root,
 .app {
   margin: 0 !important;
-  padding: 0 !important;
   height: 100vh;
   max-height: 100vh;
   overflow-x: hidden;
   overscroll-behavior: none;
   font-family: "Inter", sans-serif;
-}
-
-.app {
-  padding-top: 60px;
 }
 
 .container {
@@ -64,9 +59,19 @@ body,
   position: relative;
   padding: 15px;
   overflow-y: auto;
-  /* max-height: 100vh; */
   -webkit-overflow-scrolling: touch;
   max-height: 100vh;
+}
+
+body.telegram-webapp .container {
+  padding-top: 75px;
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 11;
 }
 
 .noMore {

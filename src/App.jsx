@@ -33,6 +33,7 @@ function App() {
     if (window.Telegram && window.Telegram.WebApp) {
       window.Telegram.WebApp.ready();
       window.Telegram.WebApp.expand();
+      document.body.classList.add("telegram-webapp");
     }
   }, []);
 
