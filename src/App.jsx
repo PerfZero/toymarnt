@@ -35,6 +35,9 @@ function App() {
     if (tg && tg.initData) {
       tg.ready();
       tg.expand();
+
+      const headerHeight = tg.contentSafeAreaInset?.top ?? 75;
+      document.body.style.paddingTop = `${headerHeight}px`;
       document.body.classList.add("telegram-webapp");
     }
   }, []);
