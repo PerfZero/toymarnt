@@ -36,7 +36,7 @@ function App() {
       tg.ready();
       tg.expand();
 
-      const headerHeight = tg.contentSafeAreaInset?.top ?? 75;
+      const headerHeight = tg.contentSafeAreaInset?.top ?? 100;
       document.body.style.paddingTop = `${headerHeight}px`;
       document.body.classList.add("telegram-webapp");
     }
