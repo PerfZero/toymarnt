@@ -238,6 +238,7 @@
   .product-content {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     width: calc(100% - 410px);
     /* margin-left: 100px; */
 
@@ -511,10 +512,13 @@
       .product_keywords_items {
         margin-top: 20px;
         display: flex !important;
+        flex-wrap: wrap;
         gap: 5px !important;
+        max-width: 100%;
 
         .request-word {
           background: rgb(73, 73, 73);
+          max-width: 100%;
           padding: 3px 16px;
           border-radius: 8px;
           color: rgb(255, 255, 255);
@@ -523,6 +527,8 @@
           line-height: 22px;
           letter-spacing: 0%;
           text-align: center;
+          overflow-wrap: anywhere;
+          white-space: normal;
           cursor: pointer;
         }
       }
