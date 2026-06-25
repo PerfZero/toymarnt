@@ -97,7 +97,6 @@ function App() {
 
   useEffect(() => {
     const protectedRoutes = ["/orders", "/orderInfo"];
-    const userDataRoutes = ["/cart", ...protectedRoutes];
 
     const isProtectedRoute = protectedRoutes.some((route) =>
       location.pathname.startsWith(route),
@@ -106,24 +105,27 @@ function App() {
     const isTMA = !!window.Telegram?.WebApp?.initData;
 
     if (!user && isProtectedRoute && !isTMA) {
-      window.location.href = "/auth";
+      window.location.href = `/auth?redirect=${encodeURIComponent(
+        location.pathname + location.search
+      )}`;
       return;
     }
 
     (async () => {
-      const shouldLoadUserData = userDataRoutes.some((route) =>
-        location.pathname.startsWith(route),
-      );
-
-      if ((user || isTMA) && shouldLoadUserData) {
+      if ((user || isTMA) && isProtectedRoute) {
         const userData = await getToken();
         if (userData) {
           dispatch(setUserInfo(userData));
+        } else if (!isTMA) {
+          window.location.href = `/auth?redirect=${encodeURIComponent(
+            location.pathname + location.search
+          )}`;
+          return;
         }
       }
       setIsAuthReady(true);
     })();
-  }, [location.pathname, dispatch, user]);
+  }, [location.pathname, location.search, dispatch, user]);
 
   return (
     <div className="app">

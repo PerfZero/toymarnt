@@ -15,6 +15,7 @@ import {
   newOrder,
   payTBank,
   getCart,
+  getToken,
   updateCartItemQuantity,
   removeCartItem,
   clearServerCart,
@@ -159,6 +160,26 @@ const NewCart = () => {
       )}`
     );
   }, [location.pathname, location.search, nav]);
+
+  const ensureAuthorized = useCallback(async () => {
+    if (!isAuthorized) {
+      redirectToAuth();
+      return false;
+    }
+
+    const userData = await getToken();
+
+    if (userData) {
+      dispatch(setUserInfo(userData));
+      return true;
+    }
+
+    if (!window.Telegram?.WebApp?.initData) {
+      redirectToAuth();
+    }
+
+    return false;
+  }, [dispatch, isAuthorized, redirectToAuth]);
 
   const selectedItems = useMemo(
     () => cart.filter((item) => selectedIds.includes(item.id)),
@@ -363,8 +384,9 @@ const NewCart = () => {
   }, 0);
 
   const createOrder = async () => {
-    if (!isAuthorized) {
-      redirectToAuth();
+    const authorized = await ensureAuthorized();
+
+    if (!authorized) {
       return;
     }
 
@@ -902,10 +924,12 @@ const NewCart = () => {
           >
             <a
               href="#title"
-              onClick={(e) => {
-                if (!isAuthorized) {
-                  e.preventDefault();
-                  redirectToAuth();
+              onClick={async (e) => {
+                e.preventDefault();
+
+                const authorized = await ensureAuthorized();
+
+                if (!authorized) {
                   return;
                 }
 

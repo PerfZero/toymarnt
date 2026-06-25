@@ -77,7 +77,6 @@ const getUser = async () => {
   } catch (err) {
     toast.error("Не удалось войти в систему, попробуйте снова.");
     localStorage.removeItem("user");
-    window.location.href = "/auth";
     return null;
   }
 };
@@ -179,7 +178,6 @@ export const getToken = async () => {
   } catch (err) {
     toast.error("Не удалось войти в систему, попробуйте снова.");
     localStorage.removeItem("user");
-    window.location.href = "/auth";
     return null;
   }
 };
