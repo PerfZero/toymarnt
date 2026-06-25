@@ -37,6 +37,15 @@ function App() {
       tg.expand();
       document.body.classList.add("telegram-webapp");
 
+      // Мобильный TMA: шапка Telegram занимает место сверху — нужен отступ.
+      // Десктоп (tdesktop) и обычный браузер — отступ не нужен.
+      const platform = tg.platform || "";
+      const isMobileTMA =
+        platform === "ios" || platform === "android" || platform === "web";
+      if (isMobileTMA) {
+        document.body.classList.add("mobile-tma");
+      }
+
       // Суммируем safe area устройства (notch) + safe area контента (шапка Telegram)
       const deviceTop = tg.safeAreaInset?.top ?? 0;
       const contentTop = tg.contentSafeAreaInset?.top ?? 0;

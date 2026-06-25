@@ -8,6 +8,12 @@
     overflow: visible;
 }
 
+/* Мобильный TMA: шапка Telegram занимает место сверху.
+   На десктопе (tdesktop) и в браузере класс не ставится — отступ 0. */
+body.mobile-tma .header {
+    padding-top: var(--safe-top, var(--tg-content-safe-area-inset-top, 96px));
+}
+
 .header .container {
     position: relative;
 }
@@ -160,6 +166,10 @@
     transform: translate3d(0);
     transition: all 0.15s ease;
     z-index: 1000;
+}
+
+body.mobile-tma .modal1 {
+    top: var(--safe-top, var(--tg-content-safe-area-inset-top, 96px));
 }
 
 .dropdown2 {
