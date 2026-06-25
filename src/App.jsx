@@ -40,10 +40,10 @@ function App() {
       // Суммируем safe area устройства (notch) + safe area контента (шапка Telegram)
       const deviceTop = tg.safeAreaInset?.top ?? 0;
       const contentTop = tg.contentSafeAreaInset?.top ?? 0;
-      document.body.style.setProperty(
-        "--safe-top",
-        `${deviceTop + contentTop}px`,
-      );
+      const totalTop = deviceTop + contentTop;
+      if (totalTop > 0) {
+        document.body.style.setProperty("--safe-top", `${totalTop}px`);
+      }
     }
   }, []);
 

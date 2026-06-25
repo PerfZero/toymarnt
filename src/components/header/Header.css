@@ -3,7 +3,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 20px 20px 20px 12px !important;
-    padding-top: var(--safe-top, 0px);
+    padding-top: var(--safe-top, var(--tg-content-safe-area-inset-top, 0px));
     position: relative;
     overflow: visible;
 }
@@ -155,7 +155,7 @@
     margin-bottom: 0;
     position: fixed;
     right: 0;
-    top: var(--safe-top, 0px);
+    top: var(--safe-top, var(--tg-content-safe-area-inset-top, 0px));
     -webkit-transform: translate3d(0);
     transform: translate3d(0);
     transition: all 0.15s ease;
