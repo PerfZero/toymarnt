@@ -1,84 +1,80 @@
 @font-face {
-  font-family: "Inter";
-  src: url("./fonts/Inter/Inter-VariableFont_opsz\,wght.ttf");
+    font-family: "Inter";
+    src: url("./fonts/Inter/Inter-VariableFont_opsz\,wght.ttf");
 }
 
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: Inter !important;
-  /* border-radius: 8px !important; */
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Inter !important;
+    /* border-radius: 8px !important; */
 }
 
 a {
-  text-decoration: none;
-  color: #1fb73a;
-  cursor: pointer;
+    text-decoration: none;
+    color: #1fb73a;
+    cursor: pointer;
 }
 
 button {
-  cursor: pointer;
+    cursor: pointer;
 }
 
 *::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
+    width: 0;
+    height: 0;
+    display: none;
 }
 
 .active {
-  background-color: #363636;
-  color: #ffffff;
+    background-color: #363636;
+    color: #ffffff;
 }
 
 .bold {
-  font-weight: 600;
+    font-weight: 600;
 }
 
 body {
-  background-color: #1c1c1c;
-  min-width: 360px;
+    background-color: #1c1c1c;
+    min-width: 360px;
 }
 
 html,
 body,
 #root,
 .app {
-  margin: 0 !important;
-  height: 100vh;
-  max-height: 100vh;
-  overflow-x: hidden;
-  overscroll-behavior: none;
-  font-family: "Inter", sans-serif;
+    margin: 0 !important;
+    height: 100vh;
+    max-height: 100vh;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+    font-family: "Inter", sans-serif;
 }
 
 .container {
-  max-width: 1440px;
-  margin: 0 auto;
-  position: relative;
-  padding: 15px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  max-height: 100vh;
-}
-
-body.telegram-webapp {
-  background: transparent;
+    max-width: 1440px;
+    margin: 0 auto;
+    position: relative;
+    padding: 15px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: 100vh;
 }
 
 .sidebar-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 11;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 11;
 }
 
 .noMore {
-  text-align: center;
-  color: #ffffff;
-  margin: 20px 0;
-  font-weight: bold;
+    text-align: center;
+    color: #ffffff;
+    margin: 20px 0;
+    font-weight: bold;
 }
 
 /* media */
