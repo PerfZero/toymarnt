@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LoginButton } from "@telegram-auth/react";
 import { getAppearanceSettings } from "../utils/appearanceSettings";
 import "./TelegramAuthButton.css";
+
+const StableLoginButton = memo(LoginButton);
 
 const TELEGRAM_AUTH_ORIGIN = "https://oauth.telegram.org";
 const DEFAULT_BOT_USERNAME = "toymarket_bot";
@@ -60,12 +62,12 @@ export const TelegramAuthButton = ({
     return "Вход через Telegram недоступен";
   }, [isReady, status]);
 
-  const handleAuth = useCallback(
-    (data) => {
-      onAuth(data);
-    },
-    [onAuth]
-  );
+  const onAuthRef = useRef(onAuth);
+  onAuthRef.current = onAuth;
+
+  const handleAuth = useCallback((data) => {
+    onAuthRef.current(data);
+  }, []);
 
   useEffect(() => {
     if (botUsername || botUsernameProp) return undefined;
@@ -165,7 +167,7 @@ export const TelegramAuthButton = ({
           ref={widgetRef}
           aria-hidden={!isReady}
         >
-          <LoginButton
+          <StableLoginButton
             botUsername={botUsername}
             buttonSize="large"
             cornerRadius={8}
