@@ -16,6 +16,7 @@ import AuthTelegram from "./auth/Auth";
 import { getToken } from "./api";
 import { setUserInfo } from "./context/cartSlice";
 import { applyAppearanceStyle } from "./utils/appearanceStyle";
+import { getAppearanceSettings } from "./utils/appearanceSettings";
 import News from "./routes/categoryProducts/News";
 import Search from "./routes/categoryProducts/Search";
 import TypesProducts from "./routes/categoryProducts/TypesProducts";
@@ -75,6 +76,8 @@ function App() {
 
   useEffect(() => {
     let isMounted = true;
+
+    getAppearanceSettings().catch(() => {});
 
     fetch("https://api.toymarket.site/appearance/style", {
       headers: { Accept: "application/json" },

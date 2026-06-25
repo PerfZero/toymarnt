@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { LoginButton } from "@telegram-auth/react";
+import { getAppearanceSettings } from "../utils/appearanceSettings";
 import "./TelegramAuthButton.css";
 
 const TELEGRAM_AUTH_ORIGIN = "https://oauth.telegram.org";
@@ -71,10 +72,7 @@ export const TelegramAuthButton = ({
 
     let isMounted = true;
 
-    fetch("https://api.toymarket.site/appearance/settings", {
-      headers: { Accept: "application/json" },
-    })
-      .then((response) => (response.ok ? response.json() : null))
+    getAppearanceSettings()
       .then((settings) => {
         if (!isMounted) return;
 
