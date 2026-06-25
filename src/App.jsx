@@ -32,6 +32,10 @@ function App() {
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp;
+
+    // Отладка через ?tmaDebug=1 — форсирует мобильный вид на компе
+    const isDebug = new URLSearchParams(window.location.search).has("tmaDebug");
+
     if (tg && tg.initData) {
       tg.ready();
       tg.expand();
@@ -42,7 +46,7 @@ function App() {
       const platform = tg.platform || "";
       const isMobileTMA =
         platform === "ios" || platform === "android" || platform === "web";
-      if (isMobileTMA) {
+      if (isMobileTMA || isDebug) {
         document.body.classList.add("mobile-tma");
       }
 
@@ -53,6 +57,19 @@ function App() {
       if (totalTop > 0) {
         document.body.style.setProperty("--safe-top", `${totalTop}px`);
       }
+
+      // eslint-disable-next-line no-console
+      console.log("[TMA]", {
+        platform,
+        initData: Boolean(tg.initData),
+        safeAreaInset: tg.safeAreaInset,
+        contentSafeAreaInset: tg.contentSafeAreaInset,
+        totalTop,
+        version: tg.version,
+      });
+    } else if (isDebug) {
+      // Нет Telegram WebApp — имитируем мобильный отступ для проверки вёрстки
+      document.body.classList.add("mobile-tma");
     }
   }, []);
 
