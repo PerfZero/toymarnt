@@ -3,6 +3,16 @@ import { LoginButton } from "@telegram-auth/react";
 import "./TelegramAuthButton.css";
 
 const TELEGRAM_AUTH_ORIGIN = "https://oauth.telegram.org";
+const DEFAULT_BOT_USERNAME = "toymarket_bot";
+
+const parseTelegramBotUsername = (value) => {
+  if (!value) return "";
+
+  const rawValue = String(value).trim();
+  const match = rawValue.match(/(?:https?:\/\/t\.me\/|@)?([a-zA-Z0-9_]+)\/?$/);
+
+  return match?.[1] ?? "";
+};
 
 const getInitialStatus = () => {
   const hostname = window.location.hostname;
@@ -29,8 +39,15 @@ const getMessageData = (data) => {
   }
 };
 
-export const TelegramAuthButton = ({ onAuth, className = "" }) => {
+export const TelegramAuthButton = ({
+  onAuth,
+  className = "",
+  botUsername: botUsernameProp,
+}) => {
   const widgetRef = useRef(null);
+  const [botUsername, setBotUsername] = useState(
+    parseTelegramBotUsername(botUsernameProp)
+  );
   const [status, setStatus] = useState(getInitialStatus);
 
   const isReady = status === "ready";
@@ -50,18 +67,51 @@ export const TelegramAuthButton = ({ onAuth, className = "" }) => {
   );
 
   useEffect(() => {
-    if (status === "blocked") return undefined;
+    if (botUsername || botUsernameProp) return undefined;
+
+    let isMounted = true;
+
+    fetch("https://api.toymarket.site/appearance/settings", {
+      headers: { Accept: "application/json" },
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((settings) => {
+        if (!isMounted) return;
+
+        setBotUsername(
+          parseTelegramBotUsername(settings?.telegram_bot_url) ||
+            DEFAULT_BOT_USERNAME
+        );
+      })
+      .catch(() => {
+        if (isMounted) {
+          setBotUsername(DEFAULT_BOT_USERNAME);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [botUsername, botUsernameProp]);
+
+  useEffect(() => {
+    if (status === "blocked" || !botUsername) return undefined;
 
     const widgetNode = widgetRef.current;
+    let iframe = null;
 
     const markIframe = () => {
-      const iframe = widgetNode?.querySelector(
+      iframe = widgetNode?.querySelector(
         'iframe[src*="oauth.telegram.org"]'
       );
 
       if (iframe) {
         iframe.classList.add("telegram-auth-widget-frame");
         iframe.title = "Telegram Login";
+
+        if (iframe._ready) {
+          setStatus("ready");
+        }
       }
     };
 
@@ -82,6 +132,14 @@ export const TelegramAuthButton = ({ onAuth, className = "" }) => {
       }
     };
 
+    const readyCheckInterval = window.setInterval(() => {
+      if (iframe?._ready) {
+        setStatus("ready");
+      } else {
+        markIframe();
+      }
+    }, 250);
+
     if (widgetNode) {
       observer.observe(widgetNode, { childList: true, subtree: true });
       markIframe();
@@ -92,9 +150,10 @@ export const TelegramAuthButton = ({ onAuth, className = "" }) => {
     return () => {
       observer.disconnect();
       window.clearTimeout(timer);
+      window.clearInterval(readyCheckInterval);
       window.removeEventListener("message", handleMessage);
     };
-  }, [status]);
+  }, [botUsername, status]);
 
   return (
     <div className={`telegram-auth-button ${status} ${className}`}>
@@ -102,14 +161,14 @@ export const TelegramAuthButton = ({ onAuth, className = "" }) => {
         <span>{buttonText}</span>
       </button>
 
-      {status !== "blocked" && (
+      {status !== "blocked" && botUsername && (
         <div
           className="telegram-auth-widget-layer"
           ref={widgetRef}
           aria-hidden={!isReady}
         >
           <LoginButton
-            botUsername="toymarket_bot"
+            botUsername={botUsername}
             buttonSize="large"
             cornerRadius={8}
             showAvatar={false}
