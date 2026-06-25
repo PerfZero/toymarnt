@@ -237,7 +237,7 @@ function OrderInfo() {
               <div className="cart-item-row" key={product.productID}>
                 <div
                   onClick={() =>
-                    nav(`/item/${product.productTypeID}/${product.productID}`)
+                    nav(`/item/${product.productID}`)
                   }
                   className="cart-item-picture"
                 >

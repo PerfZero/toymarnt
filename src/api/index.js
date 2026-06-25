@@ -15,15 +15,15 @@ const getProductsByType = async (id) => {
 };
 const getProductsById = async (id) => {
   try {
-    const req = await fetch("https://api.toymarket.site/products/" + id);
+    const isNumeric = !isNaN(Number(id));
+    const url = isNumeric
+      ? "https://api.toymarket.site/products/" + id
+      : "https://api.toymarket.site/products/models/" + id;
+    const req = await fetch(url);
     const res = await req.json();
 
     return res;
   } catch (err) {
-    // if (err.status == 401) {
-    //   localStorage.removeItem("user");
-    //   window.location.href = "/auth";
-    // }
   }
 };
 const getProductsByTypeWithLimit = async (id, limit) => {

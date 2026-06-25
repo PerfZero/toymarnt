@@ -1,0 +1,10 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: toymarket-frontend:latest
+    container_name: toymarket-frontend
+    ports:
+      - "8080:80"
+    restart: unless-stopped

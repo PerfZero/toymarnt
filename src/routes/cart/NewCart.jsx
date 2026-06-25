@@ -489,7 +489,7 @@ const NewCart = () => {
 
                   <div
                     className="cart-item-picture"
-                    onClick={() => nav(`/item/${getModelId(product)}`)}
+                    onClick={() => nav(`/item/${getModelId(product) || product.id}`)}
                   >
                     <img
                       src={

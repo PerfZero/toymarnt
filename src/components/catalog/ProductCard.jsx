@@ -244,7 +244,7 @@ function ProductCard({ products = [] }) {
 
   return (
     <div className="catalogItem_card">
-      <Link className="product-img-link" to={`/item/${getModelId(product)}`}>
+      <Link className="product-img-link" to={`/item/${getModelId(product) || product.id}`}>
         {rshzEnabled &&
         marketingPrice &&
         retailPrice &&
@@ -325,7 +325,7 @@ function ProductCard({ products = [] }) {
         ) : (
           <div
             className="price"
-            onClick={() => nav(`/item/${getModelId(product)}`)}
+            onClick={() => nav(`/item/${getModelId(product) || product.id}`)}
           >
             {formatNumber(finalPrice)} ₽
           </div>
