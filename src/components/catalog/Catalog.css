@@ -54,6 +54,17 @@
   }
 }
 
+.catalogItem_loading,
+.catalogItem_pending {
+  min-height: 380px;
+}
+
+.catalogItem_loading {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
 .home .catalogItem_cards {
   display: flex !important;
   width: 100%;

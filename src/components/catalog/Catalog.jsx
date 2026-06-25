@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   useGetCategoriesQuery,
   useLazyGetNewProductsLazyQuery,
@@ -12,25 +12,164 @@ import { FreeMode } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import ProductCard, { getGroupKey, canShowGroup } from "./ProductCard";
 
+const HOME_SECTION_PRODUCT_LIMIT = 80;
+
+const groupProducts = (items = []) => {
+  const groups = new Map();
+
+  items.forEach((product) => {
+    const key = getGroupKey(product);
+
+    if (!groups.has(key)) {
+      groups.set(key, {
+        id: key,
+        products: [],
+      });
+    }
+
+    groups.get(key).products.push(product);
+  });
+
+  return Array.from(groups.values()).filter((group) =>
+    canShowGroup(group.products)
+  );
+};
+
+function CatalogSection({
+  title,
+  products = [],
+  isLoading = false,
+  onTitleClick,
+  sectionRef,
+  shouldRenderEmpty = false,
+}) {
+  const productGroups = useMemo(() => groupProducts(products), [products]);
+
+  if (!shouldRenderEmpty && !isLoading && productGroups.length === 0) {
+    return null;
+  }
+
+  return (
+    <div ref={sectionRef} className="catalogItem">
+      <p onClick={onTitleClick} className="catalogItem_title">
+        <span>{title}</span>
+        <LuChevronRight />
+      </p>
+
+      {isLoading ? (
+        <div className="catalogItem_loading">
+          <img width={48} src={loader} alt="" />
+        </div>
+      ) : productGroups.length > 0 ? (
+        <div>
+          <Swiper
+            modules={[FreeMode]}
+            freeMode={true}
+            spaceBetween={10}
+            slidesPerView="auto"
+            className="product-swiper"
+          >
+            {productGroups.slice(0, 9).map((group) => (
+              <SwiperSlide key={group.id} style={{ width: "180px" }}>
+                <ProductCard products={group.products} />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
+      ) : (
+        <div className="catalogItem_pending" />
+      )}
+    </div>
+  );
+}
+
+function LazyCategorySection({ category }) {
+  const nav = useNavigate();
+  const sectionRef = useRef(null);
+
+  const [shouldLoad, setShouldLoad] = useState(false);
+  const [products, setProducts] = useState(null);
+  const [triggerGetProducts, { isFetching }] =
+    useLazyGetProductsByTypeWithLimitQuery();
+
+  useEffect(() => {
+    const node = sectionRef.current;
+
+    if (!node || shouldLoad) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldLoad(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "600px 0px" }
+    );
+
+    observer.observe(node);
+
+    return () => observer.disconnect();
+  }, [shouldLoad]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!shouldLoad || products) return;
+
+    triggerGetProducts({
+      id: category.id,
+      limit: HOME_SECTION_PRODUCT_LIMIT,
+    })
+      .unwrap()
+      .then((productsData) => {
+        if (isMounted) {
+          setProducts(productsData || []);
+        }
+      })
+      .catch((err) => {
+        console.error(
+          `Error fetching products for category ID ${category.id}:`,
+          err
+        );
+
+        if (isMounted) {
+          setProducts([]);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [category.id, products, shouldLoad, triggerGetProducts]);
+
+  return (
+    <CatalogSection
+      title={category.name}
+      products={products || []}
+      isLoading={shouldLoad && (isFetching || products === null)}
+      onTitleClick={() => nav("/cat/" + category.id)}
+      sectionRef={sectionRef}
+      shouldRenderEmpty={products === null}
+    />
+  );
+}
+
 function Catalog() {
   const nav = useNavigate();
 
-  const [products, setProducts] = useState([]);
+  const [newProducts, setNewProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasInitialized, setHasInitialized] = useState(false);
 
   const [newProductsData] = useLazyGetNewProductsLazyQuery();
   const { data: categoriesData } = useGetCategoriesQuery();
-  const [triggerGetProducts] = useLazyGetProductsByTypeWithLimitQuery();
 
   const categories = useMemo(() => categoriesData || [], [categoriesData]);
 
   useEffect(() => {
-    if (!categories.length || hasInitialized) return;
-
     let isMounted = true;
 
-    const fetchAllProducts = async () => {
+    const fetchNewProducts = async () => {
       setIsLoading(true);
 
       try {
@@ -39,44 +178,11 @@ function Catalog() {
           inStock: 1,
         }).unwrap();
 
-        const categoryProducts = await Promise.all(
-          categories.map(async ({ id, name }) => {
-            try {
-              const productsData = await triggerGetProducts({ id }).unwrap();
-
-              return {
-                id,
-                categoryName: name,
-                products: productsData || [],
-              };
-            } catch (err) {
-              console.error(
-                `Error fetching products for category ID ${id}:`,
-                err
-              );
-
-              return {
-                id,
-                categoryName: name,
-                products: [],
-              };
-            }
-          })
-        );
-
         if (isMounted) {
-          setProducts([
-            {
-              categoryName: "Новинки",
-              products: newProductsResponse || [],
-            },
-            ...categoryProducts,
-          ]);
-
-          setHasInitialized(true);
+          setNewProducts(newProductsResponse || []);
         }
       } catch (err) {
-        console.error("Error fetching products:", err);
+        console.error("Error fetching new products:", err);
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -84,40 +190,12 @@ function Catalog() {
       }
     };
 
-    fetchAllProducts();
+    fetchNewProducts();
 
     return () => {
       isMounted = false;
     };
-  }, [categories, hasInitialized, newProductsData, triggerGetProducts]);
-
-  const catalogs = useMemo(() => {
-    const groupProducts = (items = []) => {
-      const groups = new Map();
-
-      items.forEach((product) => {
-        const key = getGroupKey(product);
-
-        if (!groups.has(key)) {
-          groups.set(key, {
-            id: key,
-            products: [],
-          });
-        }
-
-        groups.get(key).products.push(product);
-      });
-
-      return Array.from(groups.values()).filter((group) =>
-        canShowGroup(group.products)
-      );
-    };
-
-    return products.map((item) => ({
-      ...item,
-      productGroups: groupProducts(item?.products || []),
-    }));
-  }, [products]);
+  }, [newProductsData]);
 
   if (isLoading) {
     return (
@@ -129,43 +207,15 @@ function Catalog() {
 
   return (
     <div className="catalog container">
-      {catalogs?.map(
-        (item, index) =>
-          item?.productGroups?.length > 0 && (
-            <div
-              key={item.id || item.categoryName || index}
-              className="catalogItem"
-            >
-              <p
-                onClick={() =>
-                  item.categoryName === "Новинки"
-                    ? nav("/new/")
-                    : nav("/cat/" + item.id)
-                }
-                className="catalogItem_title"
-              >
-                <span>{item.categoryName}</span>
-                <LuChevronRight />
-              </p>
+      <CatalogSection
+        title="Новинки"
+        products={newProducts}
+        onTitleClick={() => nav("/new/")}
+      />
 
-              <div>
-                <Swiper
-                  modules={[FreeMode]}
-                  freeMode={true}
-                  spaceBetween={10}
-                  slidesPerView="auto"
-                  className="product-swiper"
-                >
-                  {item.productGroups.slice(0, 9).map((group) => (
-                    <SwiperSlide key={group.id} style={{ width: "180px" }}>
-                      <ProductCard products={group.products} />
-                    </SwiperSlide>
-                  ))}
-                </Swiper>
-              </div>
-            </div>
-          )
-      )}
+      {categories.map((category) => (
+        <LazyCategorySection key={category.id} category={category} />
+      ))}
     </div>
   );
 }
