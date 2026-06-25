@@ -1,17 +1,19 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import logo from "../img/logo.png";
 import { LoginButton } from "@telegram-auth/react";
 import "./auth.css";
 
 const AuthTelegram = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || "/";
 
   useEffect(() => {
     if (localStorage.getItem("user")) {
-      navigate("/");
+      navigate(redirectTo);
     }
-  }, [navigate]);
+  }, [navigate, redirectTo]);
 
   return (
     <div className="container-order-data">
@@ -29,7 +31,7 @@ const AuthTelegram = () => {
             lang="ru"
             onAuthCallback={(data) => {
               localStorage.setItem("user", JSON.stringify(data));
-              navigate("/");
+              navigate(redirectTo);
             }}
           />
           <p className="politic">

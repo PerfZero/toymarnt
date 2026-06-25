@@ -73,7 +73,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const protectedRoutes = ["/cart", "/orders", "/orderInfo"];
+    const protectedRoutes = ["/orders", "/orderInfo"];
+    const userDataRoutes = ["/cart", ...protectedRoutes];
 
     const isProtectedRoute = protectedRoutes.some((route) =>
       location.pathname.startsWith(route),
@@ -87,7 +88,11 @@ function App() {
     }
 
     (async () => {
-      if ((user || isTMA) && isProtectedRoute) {
+      const shouldLoadUserData = userDataRoutes.some((route) =>
+        location.pathname.startsWith(route),
+      );
+
+      if ((user || isTMA) && shouldLoadUserData) {
         const userData = await getToken();
         if (userData) {
           dispatch(setUserInfo(userData));

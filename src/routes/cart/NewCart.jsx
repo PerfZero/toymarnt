@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setCart, setUserInfo } from "../../context/cartSlice";
 import { FaMinus, FaPlus } from "react-icons/fa";
@@ -118,14 +118,19 @@ const normalizeCartItem = (item) => {
 
 const NewCart = () => {
   const nav = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
   const back = useGoBackOrHome();
+  const hasLoadedServerCart = useRef(false);
 
   const { data: pickupPointsData } = useGetPickupPointsQuery();
   const pickupPoints = pickupPointsData?.data || [];
 
   const cart = useSelector((state) => state.cart.items);
   const reduxUserInfo = useSelector((state) => state.cart.userInfo);
+  const isAuthorized =
+    Boolean(localStorage.getItem("user")) ||
+    Boolean(window.Telegram?.WebApp?.initData);
 
   const [deliveryData, setDeliveryData] = useState("pickup");
   const [selectedIds, setSelectedIds] = useState([]);
@@ -147,6 +152,14 @@ const NewCart = () => {
   const [selectedPickup, setSelectedPickup] = useState(null);
   const [selectedPickupName, setSelectedPickupName] = useState("Не выбран");
 
+  const redirectToAuth = useCallback(() => {
+    nav(
+      `/auth?redirect=${encodeURIComponent(
+        location.pathname + location.search
+      )}`
+    );
+  }, [location.pathname, location.search, nav]);
+
   const selectedItems = useMemo(
     () => cart.filter((item) => selectedIds.includes(item.id)),
     [cart, selectedIds]
@@ -163,6 +176,15 @@ const NewCart = () => {
 
   useEffect(() => {
     const loadCart = async () => {
+      if (!isAuthorized) {
+        setSelectedIds(cart.map((item) => item.id));
+        setSelectedAll(cart.length > 0);
+        return;
+      }
+
+      if (hasLoadedServerCart.current) return;
+      hasLoadedServerCart.current = true;
+
       try {
         setIsCartLoading(true);
         await syncCart();
@@ -175,7 +197,7 @@ const NewCart = () => {
     };
 
     loadCart();
-  }, [dispatch, syncCart]);
+  }, [cart, isAuthorized, syncCart]);
 
   useEffect(() => {
     setSelectedIds((prev) => {
@@ -231,10 +253,12 @@ const NewCart = () => {
     }
 
     try {
-      await updateCartItemQuantity({
-        product_id: product.id,
-        quantity,
-      });
+      if (isAuthorized) {
+        await updateCartItemQuantity({
+          product_id: product.id,
+          quantity,
+        });
+      }
 
       dispatch(
         setCart(
@@ -272,7 +296,10 @@ const NewCart = () => {
 
   const deleteItem = async (productId) => {
     try {
-      await removeCartItem(productId);
+      if (isAuthorized) {
+        await removeCartItem(productId);
+      }
+
       dispatch(setCart(cart.filter((item) => item.id !== productId)));
       setSelectedIds((ids) => ids.filter((id) => id !== productId));
     } catch (error) {
@@ -285,14 +312,19 @@ const NewCart = () => {
   const deletedItems = async () => {
     try {
       if (selectedAll || selectedIds.length === cart.length) {
-        await clearServerCart();
+        if (isAuthorized) {
+          await clearServerCart();
+        }
+
         dispatch(setCart([]));
         setSelectedIds([]);
         setSelectedAll(false);
         return;
       }
 
-      await Promise.all(selectedIds.map((id) => removeCartItem(id)));
+      if (isAuthorized) {
+        await Promise.all(selectedIds.map((id) => removeCartItem(id)));
+      }
 
       dispatch(setCart(cart.filter((item) => !selectedIds.includes(item.id))));
       setSelectedIds([]);
@@ -331,6 +363,11 @@ const NewCart = () => {
   }, 0);
 
   const createOrder = async () => {
+    if (!isAuthorized) {
+      redirectToAuth();
+      return;
+    }
+
     const basket = selectedItems;
 
     if (!basket.length) {
@@ -776,11 +813,15 @@ const NewCart = () => {
               </ul>
 
               <button
-                disabled={!selectedPickupId && deliveryData === "pickup"}
+                disabled={
+                  isAuthorized && !selectedPickupId && deliveryData === "pickup"
+                }
                 onClick={createOrder}
                 className="orderButton"
               >
-                {!selectedPickupId && deliveryData === "pickup"
+                {!isAuthorized
+                  ? "Войти для оформления"
+                  : !selectedPickupId && deliveryData === "pickup"
                   ? "Выберите пункт выдачи"
                   : deliveryData === "courier"
                   ? "Оплатить онлайн"
@@ -861,12 +902,18 @@ const NewCart = () => {
           >
             <a
               href="#title"
-              onClick={() => {
+              onClick={(e) => {
+                if (!isAuthorized) {
+                  e.preventDefault();
+                  redirectToAuth();
+                  return;
+                }
+
                 setOpenTotalBlock(true);
                 window.scrollTo(0, 0);
               }}
             >
-              <span>К оформлению</span>
+              <span>{isAuthorized ? "К оформлению" : "Войти для оформления"}</span>
               <p>на {formatNumber(totalPrice)} ₽</p>
             </a>
           </div>
