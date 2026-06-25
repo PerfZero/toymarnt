@@ -3,17 +3,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 20px 20px 20px 12px !important;
-    padding-top: var(--safe-top, var(--tg-content-safe-area-inset-top, 0px));
     position: relative;
     overflow: visible;
-}
-
-/* Мобильный TMA: шапка Telegram занимает место сверху — нужен отступ.
-   На десктопе (tdesktop) и в браузере класс не ставится — отступ 0.
-   max() гарантирует минимум 96px даже если Telegram отдаёт safe area = 0px. */
-body.mobile-tma .header {
-    padding-top: max(var(--safe-top, 0px), var(--tg-content-safe-area-inset-top, 0px), 96px);
-    background-color: red; /* DEBUG: красный фон зоны отступа, убрать после проверки */
 }
 
 .header .container {
@@ -163,15 +154,15 @@ body.mobile-tma .header {
     margin-bottom: 0;
     position: fixed;
     right: 0;
-    top: var(--safe-top, var(--tg-content-safe-area-inset-top, 0px));
+    top: 0;
     -webkit-transform: translate3d(0);
     transform: translate3d(0);
     transition: all 0.15s ease;
     z-index: 1000;
 }
 
-body.mobile-tma .modal1 {
-    top: var(--safe-top, var(--tg-content-safe-area-inset-top, 96px));
+body.telegram-webapp .modal1 {
+    top: calc(var(--tg-safe-area-inset-top) + var(--tg-content-safe-area-inset-top));
 }
 
 .dropdown2 {

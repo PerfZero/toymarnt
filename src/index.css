@@ -53,6 +53,10 @@ body,
     font-family: "Inter", sans-serif;
 }
 
+body.telegram-webapp .app {
+    padding-top: calc(var(--tg-safe-area-inset-top) + var(--tg-content-safe-area-inset-top));
+}
+
 .container {
     max-width: 1440px;
     margin: 0 auto;

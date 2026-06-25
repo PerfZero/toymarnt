@@ -50,25 +50,24 @@ function App() {
         document.body.classList.add("mobile-tma");
       }
 
-      // Суммируем safe area устройства (notch) + safe area контента (шапка Telegram)
-      const deviceTop = tg.safeAreaInset?.top ?? 0;
-      const contentTop = tg.contentSafeAreaInset?.top ?? 0;
-      const totalTop = deviceTop + contentTop;
-      if (totalTop > 0) {
-        document.body.style.setProperty("--safe-top", `${totalTop}px`);
+      if (isDebug) {
+        // eslint-disable-next-line no-console
+        console.log("[TMA]", {
+          platform,
+          initData: Boolean(tg.initData),
+          safeAreaInset: tg.safeAreaInset,
+          contentSafeAreaInset: tg.contentSafeAreaInset,
+          cssSafeAreaTop: getComputedStyle(document.documentElement)
+            .getPropertyValue("--tg-safe-area-inset-top")
+            .trim(),
+          cssContentSafeAreaTop: getComputedStyle(document.documentElement)
+            .getPropertyValue("--tg-content-safe-area-inset-top")
+            .trim(),
+          version: tg.version,
+        });
       }
-
-      // eslint-disable-next-line no-console
-      console.log("[TMA]", {
-        platform,
-        initData: Boolean(tg.initData),
-        safeAreaInset: tg.safeAreaInset,
-        contentSafeAreaInset: tg.contentSafeAreaInset,
-        totalTop,
-        version: tg.version,
-      });
     } else if (isDebug) {
-      // Нет Telegram WebApp — имитируем мобильный отступ для проверки вёрстки
+      // Нет Telegram WebApp — меняем только мобильную компоновку, без fake safe area.
       document.body.classList.add("mobile-tma");
     }
   }, []);
