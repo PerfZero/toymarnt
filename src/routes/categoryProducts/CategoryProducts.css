@@ -428,6 +428,54 @@
   margin: 0;
 }
 
+.categoryProducts {
+  color: var(--appearance-main-text-color);
+}
+
+.categoryProducts_title .left,
+.categoryProducts_title .sub-title {
+  background: var(--appearance-main-background-color);
+  color: var(--appearance-header-text-color);
+}
+
+.categoryProducts_title .left .countOfProducts {
+  color: var(--appearance-secondary-text-color);
+}
+
+.categoryProducts_title .right button,
+.load_more {
+  background: var(--appearance-secondary-button-background-color);
+  color: var(--appearance-secondary-button-text-color) !important;
+}
+
+.search_input {
+  background: var(--appearance-info-blocks-background-color);
+  color: var(--appearance-main-text-color);
+}
+
+.modal-container,
+.modal-content {
+  background-color: var(--appearance-secondary-button-background-color);
+  color: var(--appearance-secondary-button-text-color);
+}
+
+.formButton {
+  background-color: var(--appearance-active-main-button-background-color);
+  color: var(--appearance-active-main-button-text-color);
+}
+
+.formButton:hover {
+  background-color: var(--appearance-active-main-button-background-color);
+}
+
+.form-group-radio input[type="radio"]:checked + label::before {
+  border-color: var(--appearance-active-secondary-button-background-color);
+}
+
+.form-group-radio label::after {
+  background-color: var(--appearance-active-secondary-button-background-color);
+}
+
 .gray-7dfs-14 {
   color: #7d7d7d;
   font-size: 14px;

@@ -1051,3 +1051,91 @@
   opacity: 0.45;
   text-decoration: line-through;
 }
+
+.singlepage {
+  color: var(--appearance-main-text-color);
+}
+
+.singlepage .caption,
+.singlepage .caption a,
+.singlepage .caption svg,
+.singlepage .caption_right .copy_article,
+.singlepage .product_name,
+.singlepage .colorText,
+.singlepage .shoesSizeTitle_caption,
+.singlepage .shoesSizeTitle u,
+.singlepage .remained,
+.singlepage .product_keywords .sub-title,
+.singlepage .rshz,
+.singlepage .or_text,
+.not-found {
+  color: var(--appearance-main-text-color);
+}
+
+.singlepage .description,
+.singlepage .min_order {
+  color: var(--appearance-secondary-text-color);
+}
+
+.singlepage .product_price_box,
+.singlepage .product_keywords_items .request-word {
+  background: var(--appearance-info-blocks-background-color);
+}
+
+.singlepage .price_and_discounts .p_price h3 {
+  color: var(--appearance-product-card-top-price-text-color);
+}
+
+.singlepage .product_price_box .price_and_discounts .p_price h3 {
+  color: var(--appearance-product-card-bottom-price-text-color);
+}
+
+.singlepage .price_and_discounts .old-price {
+  color: var(--appearance-product-card-top-old-price-text-color);
+}
+
+.singlepage .product_price_box .price_and_discounts .old-price {
+  color: var(--appearance-product-card-bottom-old-price-text-color);
+}
+
+.singlepage .price_and_discounts .percent,
+.singlepage .price_and_discounts .discount_percent {
+  background: var(--appearance-product-card-discount-background-color);
+  color: var(--appearance-product-card-discount-text-color);
+}
+
+.singlepage .small-white-button {
+  background: var(--appearance-secondary-button-background-color);
+  color: var(--appearance-secondary-button-text-color);
+}
+
+.singlepage .small-white-button.activePr,
+.mySwiper2 .swiper-slide-thumb-active .image {
+  border-color: var(--appearance-active-main-button-background-color);
+  outline-color: var(--appearance-active-main-button-background-color);
+}
+
+.singlepage .counter-container {
+  background: var(--appearance-product-card-quantity-background-color);
+  color: var(--appearance-product-card-quantity-text-color);
+}
+
+.singlepage .counter-button,
+.singlepage .counter-value {
+  color: var(--appearance-product-card-quantity-text-color);
+}
+
+.singlepage .add-button {
+  background: var(--appearance-active-main-button-background-color);
+  color: var(--appearance-active-main-button-text-color);
+}
+
+.singlepage .out-of-stock-button {
+  background: var(--appearance-disable-button-background-color);
+  color: var(--appearance-disable-button-text-color);
+}
+
+.singlepage .other_marketplace button {
+  background: var(--appearance-service-button-background-color);
+  color: var(--appearance-service-button-text-color);
+}

@@ -3,6 +3,59 @@
     src: url("./fonts/Inter/Inter-VariableFont_opsz\,wght.ttf");
 }
 
+:root {
+    --appearance-main-background-color: #1c1c1c;
+    --appearance-info-blocks-background-color: #262626;
+    --appearance-product-card-background-color: #363636;
+    --appearance-header-text-color: #ffffff;
+    --appearance-main-text-color: #ffffff;
+    --appearance-secondary-text-color: #7d7d7d;
+    --appearance-url-text-color: #1fb73a;
+    --appearance-active-main-button-background-color: #1fb73a;
+    --appearance-active-main-button-text-color: #ffffff;
+    --appearance-active-secondary-button-background-color: #0f78f1;
+    --appearance-active-secondary-button-text-color: #ffffff;
+    --appearance-secondary-button-background-color: #ffffff;
+    --appearance-secondary-button-text-color: #1c1c1c;
+    --appearance-disable-button-background-color: #7d7d7d;
+    --appearance-disable-button-text-color: #ffffff;
+    --appearance-service-button-background-color: #363636;
+    --appearance-service-button-text-color: #ffffff;
+    --appearance-service-button-border-color: #363636;
+    --appearance-product-card-description-text-color: #908f95;
+    --appearance-product-card-price-background-color: #71ab09;
+    --appearance-product-card-price-text-color: #ffffff;
+    --appearance-product-card-quantity-background-color: #222222;
+    --appearance-product-card-quantity-text-color: #ffffff;
+    --appearance-product-card-not-available-background-color: #222222;
+    --appearance-product-card-not-available-text-color: #ffffff;
+    --appearance-product-card-discount-background-color: #fd3979;
+    --appearance-product-card-discount-text-color: #ffffff;
+    --appearance-product-card-new-background-color: #007bff;
+    --appearance-product-card-new-text-color: #ffffff;
+    --appearance-order-status-new-background-color: #0f78f1;
+    --appearance-order-status-new-text-color: #ffffff;
+    --appearance-order-status-paid-background-color: #0f78f1;
+    --appearance-order-status-paid-text-color: #ffffff;
+    --appearance-order-status-collected-background-color: #1fb73a;
+    --appearance-order-status-collected-text-color: #ffffff;
+    --appearance-order-status-issued-background-color: #1fb73a;
+    --appearance-order-status-issued-text-color: #ffffff;
+    --appearance-order-status-sent-background-color: #0f78f1;
+    --appearance-order-status-sent-text-color: #ffffff;
+    --appearance-order-status-cancelled-background-color: #fd3979;
+    --appearance-order-status-cancelled-text-color: #ffffff;
+    --appearance-order-status-expired-background-color: #ff6d00;
+    --appearance-order-status-expired-text-color: #ffffff;
+    --appearance-product-card-top-price-text-color: #ffffff;
+    --appearance-product-card-top-old-price-text-color: #7d7d7d;
+    --appearance-product-card-bottom-price-text-color: #ffffff;
+    --appearance-product-card-bottom-old-price-text-color: #7d7d7d;
+    --appearance-product-card-header-text-color: #ffffff;
+    --appearance-order-price-text-color: #ffffff;
+    --appearance-order-total-text-color: #ffffff;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -13,7 +66,7 @@
 
 a {
     text-decoration: none;
-    color: #1fb73a;
+    color: var(--appearance-url-text-color);
     cursor: pointer;
 }
 
@@ -37,7 +90,7 @@ button {
 }
 
 body {
-    background-color: #1c1c1c;
+    background-color: var(--appearance-main-background-color);
     min-width: 360px;
     --mobile-bottom-bar-height: 64px;
     --mobile-bottom-bar-gap: 15px;

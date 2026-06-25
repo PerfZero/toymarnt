@@ -5,7 +5,7 @@
     gap: 50px;
     justify-content: center;
     height: 100vh;
-    color: white;
+    color: var(--appearance-main-text-color);
     z-index: 999;
   
     img {
@@ -18,11 +18,10 @@
     }
   
     button {
-      color: #1fb73a;
+      color: var(--appearance-url-text-color);
       background: none;
       border: none;
       cursor: pointer;
       font-size: 18px;
     }
   }
-  

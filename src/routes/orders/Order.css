@@ -237,3 +237,52 @@
     }
   }
 }
+
+.orders {
+  color: var(--appearance-main-text-color);
+}
+
+.orders .card-block-element-title h3,
+.orders .container-order h3,
+.orders .dateLabel {
+  color: var(--appearance-main-text-color);
+}
+
+.orders .card-block-element-title span,
+.orders .dateValue,
+.orders .order_address {
+  color: var(--appearance-secondary-text-color);
+}
+
+.orders .container-order {
+  background: var(--appearance-info-blocks-background-color);
+}
+
+.orders .price-orders {
+  color: var(--appearance-order-price-text-color);
+}
+
+.orders .btn_more {
+  background: var(--appearance-service-button-background-color);
+  color: var(--appearance-service-button-text-color);
+}
+
+.orders .title_block p {
+  background: var(--appearance-order-status-new-background-color);
+  color: var(--appearance-order-status-new-text-color);
+}
+
+.orders .title_block p.greenStatsus {
+  background: var(--appearance-order-status-issued-background-color);
+  color: var(--appearance-order-status-issued-text-color);
+}
+
+.orders .title_block p.redStatsus {
+  background: var(--appearance-order-status-cancelled-background-color);
+  color: var(--appearance-order-status-cancelled-text-color);
+}
+
+.orders .title_block p.orangeStatus {
+  background: var(--appearance-order-status-expired-background-color);
+  color: var(--appearance-order-status-expired-text-color);
+}

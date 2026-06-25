@@ -595,3 +595,41 @@
     }
   }
 }
+
+.cardInfo {
+  color: var(--appearance-main-text-color);
+}
+
+.cardInfo .left-card-block,
+.cardInfo .right_top,
+.cardInfo .right_bottom,
+.cardInfo .cart-item-row,
+.cardInfo .order_address {
+  background: var(--appearance-info-blocks-background-color);
+}
+
+.cardInfo h3,
+.cardInfo .cart-item-label p,
+.cardInfo .dateLabel,
+.cardInfo .qty_price,
+.cardInfo .price-orders {
+  color: var(--appearance-main-text-color);
+}
+
+.cardInfo .card-block-element-title span,
+.cardInfo .order_address,
+.cardInfo .copy_article,
+.cardInfo .date {
+  color: var(--appearance-secondary-text-color);
+}
+
+.cardInfo .qty_price,
+.cardInfo .price-orders {
+  color: var(--appearance-order-price-text-color);
+}
+
+.cardInfo button,
+.cardInfo button.order_info_repeatBtn {
+  background: var(--appearance-active-main-button-background-color);
+  color: var(--appearance-active-main-button-text-color);
+}

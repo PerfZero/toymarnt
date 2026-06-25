@@ -15,6 +15,7 @@ import CategoryProducts from "./routes/categoryProducts/CategoryProducts";
 import AuthTelegram from "./auth/Auth";
 import { getToken } from "./api";
 import { setUserInfo } from "./context/cartSlice";
+import { applyAppearanceStyle } from "./utils/appearanceStyle";
 import News from "./routes/categoryProducts/News";
 import Search from "./routes/categoryProducts/Search";
 import TypesProducts from "./routes/categoryProducts/TypesProducts";
@@ -70,6 +71,28 @@ function App() {
       // Нет Telegram WebApp — меняем только мобильную компоновку, без fake safe area.
       document.body.classList.add("mobile-tma");
     }
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    fetch("https://api.toymarket.site/appearance/style", {
+      headers: { Accept: "application/json" },
+    })
+      .then((response) => {
+        if (!response.ok) return null;
+        return response.json();
+      })
+      .then((style) => {
+        if (isMounted) {
+          applyAppearanceStyle(style);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
