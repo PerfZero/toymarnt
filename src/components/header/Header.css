@@ -8,10 +8,12 @@
     overflow: visible;
 }
 
-/* Мобильный TMA: шапка Telegram занимает место сверху.
-   На десктопе (tdesktop) и в браузере класс не ставится — отступ 0. */
+/* Мобильный TMA: шапка Telegram занимает место сверху — нужен отступ.
+   На десктопе (tdesktop) и в браузере класс не ставится — отступ 0.
+   max() гарантирует минимум 96px даже если Telegram отдаёт safe area = 0px. */
 body.mobile-tma .header {
-    padding-top: var(--safe-top, var(--tg-content-safe-area-inset-top, 96px));
+    padding-top: max(var(--safe-top, 0px), var(--tg-content-safe-area-inset-top, 0px), 96px);
+    background-color: red; /* DEBUG: красный фон зоны отступа, убрать после проверки */
 }
 
 .header .container {
