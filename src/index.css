@@ -39,6 +39,8 @@ button {
 body {
     background-color: #1c1c1c;
     min-width: 360px;
+    --mobile-bottom-bar-height: 64px;
+    --mobile-bottom-bar-gap: 15px;
 }
 
 html,

@@ -31,6 +31,20 @@ footer p {
   margin-top: 45px;
 }
 
+@media screen and (max-width: 1024px) {
+  footer {
+    padding-bottom: calc(
+      30px + var(--mobile-bottom-bar-height) + var(--mobile-bottom-bar-gap) * 2
+    );
+  }
+
+  body.telegram-webapp footer {
+    padding-bottom: calc(
+      30px + var(--mobile-bottom-bar-height) + var(--mobile-bottom-bar-gap) * 2 + var(--tg-safe-area-inset-bottom)
+    );
+  }
+}
+
 @media screen and (max-width: 768px) {
   .footer-inner {
     flex-direction: column;
