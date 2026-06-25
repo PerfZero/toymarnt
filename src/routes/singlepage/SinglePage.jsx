@@ -68,6 +68,30 @@ const getSize = (product) => {
   return "";
 };
 
+const getPrimaryPropertyLabel = (product) =>
+  product?.primaryPropertyLabel ?? product?.primary_property?.type?.name ?? "Размер";
+
+const getPrimaryPropertyContext = (product) =>
+  product?.primaryPropertyContext ?? product?.primary_property?.context ?? "";
+
+const getPrimaryPropertyContextValue = (product) =>
+  product?.primaryPropertyContextValue ?? product?.primary_property?.value ?? "";
+
+const getPrimaryPropertyOptionValue = (product) => {
+  const articleSize = getSize(product);
+  if (articleSize) return articleSize;
+
+  return String(product?.primary_property?.value ?? "");
+};
+
+const formatPropertyContextValue = (context, value) => {
+  if (!value) return "";
+
+  return context?.toLowerCase().includes("стель")
+    ? `${value} см`
+    : String(value);
+};
+
 const getArticleWithoutSize = (product) => {
   const article = String(product?.article || "");
 
@@ -101,6 +125,19 @@ const getColorName = (product) => {
   return parts.length > 1 ? parts[parts.length - 1] : articleWithoutSize;
 };
 
+const getSecondaryPropertyLabel = (product) =>
+  product?.secondaryPropertyLabel ?? product?.secondary_property?.type?.name ?? "Цвет";
+
+const getSecondaryPropertyValue = (product) =>
+  product?.secondaryPropertyValue ?? product?.secondary_property?.value ?? "";
+
+const getSecondaryPropertyDisplayValue = (product) => {
+  const value = getSecondaryPropertyValue(product);
+  if (value) return value;
+
+  return product?.secondary_property ? "" : product?.textColor ?? "";
+};
+
 const canBuyProduct = (product) => {
   const availabilityId = getAvailabilityId(product);
 
@@ -119,6 +156,11 @@ const normalizeProduct = (product) => {
   const size = getSize(product);
   const colorKey = getColorKey(product);
   const colorName = getColorName(product);
+  const primaryPropertyLabel = getPrimaryPropertyLabel(product);
+  const primaryPropertyContext = getPrimaryPropertyContext(product);
+  const primaryPropertyContextValue = getPrimaryPropertyContextValue(product);
+  const secondaryPropertyLabel = getSecondaryPropertyLabel(product);
+  const secondaryPropertyValue = getSecondaryPropertyValue(product);
 
   return {
     ...product,
@@ -165,7 +207,12 @@ const normalizeProduct = (product) => {
     storeDeliveryInDays: product?.storeDeliveryInDays ?? product?.delivery_time,
 
     shoeSizeName: size,
-    shoeSizeLength: product?.shoeSizeLength ?? product?.primary_property?.value,
+    shoeSizeLength: product?.shoeSizeLength ?? primaryPropertyContextValue,
+    primaryPropertyLabel,
+    primaryPropertyContext,
+    primaryPropertyContextValue,
+    secondaryPropertyLabel,
+    secondaryPropertyValue,
 
     color: colorKey,
     textColor: colorName,
@@ -226,7 +273,9 @@ function SinglePage() {
 
         setProducts(normalizedProducts);
         setProduct(selectedProduct);
-        setIsSizeBtn(selectedProduct?.shoeSizeName || null);
+        setIsSizeBtn(
+          selectedProduct ? getPrimaryPropertyOptionValue(selectedProduct) : null
+        );
       } catch (error) {
         console.log(error);
         setProducts([]);
@@ -250,10 +299,8 @@ function SinglePage() {
           color: colorKey,
           textColor: getColorName(item),
           img: item?.id
-            ? `https://api.toymarket.site/assets/products/${product.id}/image`
-            : item?.image
-            ? `https://api.toymarket.site/assets/products/${product.id}/image`
-            : "",
+            ? `https://api.toymarket.site/assets/products/${item.id}/image`
+            : item?.image || "",
           product: item,
         });
       }
@@ -269,7 +316,9 @@ function SinglePage() {
       .filter((item) => getColorKey(item) === getColorKey(product))
       .map((item) => ({
         id: item.id,
-        size: getSize(item),
+        size: getPrimaryPropertyOptionValue(item),
+        context: getPrimaryPropertyContext(item),
+        contextValue: getPrimaryPropertyContextValue(item),
         product: item,
         canBuy: canBuyProduct(item),
       }))
@@ -283,7 +332,7 @@ function SinglePage() {
     const findProduct = products.find(
       (item) =>
         getColorKey(item) === getColorKey(product) &&
-        getSize(item) === isSizeBtn
+        getPrimaryPropertyOptionValue(item) === isSizeBtn
     );
 
     if (findProduct && findProduct.id !== product.id) {
@@ -502,7 +551,12 @@ function SinglePage() {
 
             {colors.length > 1 && (
               <div className="color-box">
-                <span className="colorText">Цвет: {product?.textColor}</span>
+                <span className="colorText">
+                  {getSecondaryPropertyLabel(product)}
+                  {getSecondaryPropertyValue(product)
+                    ? `: ${getSecondaryPropertyValue(product)}`
+                    : ""}
+                </span>
 
                 <div className="colors">
                   {colors.map((color) => (
@@ -515,7 +569,7 @@ function SinglePage() {
                       }`}
                       onClick={() => {
                         setProduct(color.product);
-                        setIsSizeBtn(getSize(color.product));
+                        setIsSizeBtn(getPrimaryPropertyOptionValue(color.product));
                       }}
                     >
                       {color.img ? (
@@ -532,7 +586,9 @@ function SinglePage() {
             {sizes.length > 0 && (
               <div className="shoesSizes">
                 <div className="shoesSizeTitle">
-                  <h3 className="shoesSizeTitle_caption">Выберите размер:</h3>
+                  <h3 className="shoesSizeTitle_caption">
+                    Выберите {getPrimaryPropertyLabel(product).toLowerCase()}:
+                  </h3>
                   <u>таблица размеров</u>
                 </div>
 
@@ -552,6 +608,8 @@ function SinglePage() {
                       ({
                         id: sizeProductId,
                         size,
+                        context,
+                        contextValue,
                         product: sizeProduct,
                         canBuy,
                       }) => (
@@ -569,9 +627,12 @@ function SinglePage() {
                             }}
                           >
                             <span className="size-letter">{size}</span>
-                            {sizeProduct?.shoeSizeLength && (
+                            {contextValue && (
                               <div className="size-description">
-                                {sizeProduct.shoeSizeLength} см
+                                {formatPropertyContextValue(
+                                  context,
+                                  contextValue
+                                )}
                               </div>
                             )}
                           </div>
@@ -674,18 +735,27 @@ function SinglePage() {
                     />
                   )}
 
-                  {product?.textColor && (
-                    <SpecRow label="Цвет" value={product.textColor} />
+                  {getSecondaryPropertyDisplayValue(product) && (
+                    <SpecRow
+                      label={getSecondaryPropertyLabel(product)}
+                      value={getSecondaryPropertyDisplayValue(product)}
+                    />
                   )}
 
                   {product?.shoeSizeName && (
-                    <SpecRow label="Размер" value={product.shoeSizeName} />
+                    <SpecRow
+                      label={getPrimaryPropertyLabel(product)}
+                      value={product.shoeSizeName}
+                    />
                   )}
 
-                  {product?.shoeSizeLength && (
+                  {product?.primaryPropertyContextValue && (
                     <SpecRow
-                      label="Длина стельки"
-                      value={`${product.shoeSizeLength} см`}
+                      label={getPrimaryPropertyContext(product)}
+                      value={formatPropertyContextValue(
+                        getPrimaryPropertyContext(product),
+                        product.primaryPropertyContextValue
+                      )}
                     />
                   )}
                 </>

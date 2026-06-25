@@ -16,6 +16,7 @@ export const getArticle = (product) => String(product?.article || "");
 
 export const getSize = (product) => {
   const directSize =
+    product?.shoeSizeName ??
     product?.size ??
     product?.productSize ??
     product?.sizeName ??
@@ -37,6 +38,43 @@ export const getSize = (product) => {
   return match?.[1] ?? "";
 };
 
+export const getPrimaryPropertyLabel = (product) =>
+  product?.primaryPropertyLabel ?? product?.primary_property?.type?.name ?? "Размер";
+
+export const getPrimaryPropertyContext = (product) =>
+  product?.primaryPropertyContext ?? product?.primary_property?.context ?? "";
+
+export const getPrimaryPropertyContextValue = (product) =>
+  product?.primaryPropertyContextValue ?? product?.primary_property?.value ?? "";
+
+export const getPrimaryPropertyOptionValue = (product) => {
+  const articleSize = getSize(product);
+  if (articleSize) return articleSize;
+
+  return String(product?.primary_property?.value ?? "");
+};
+
+export const getSecondaryPropertyLabel = (product) =>
+  product?.secondaryPropertyLabel ?? product?.secondary_property?.type?.name ?? "Цвет";
+
+export const getSecondaryPropertyValue = (product) =>
+  product?.secondaryPropertyValue ?? product?.secondary_property?.value ?? "";
+
+export const getSecondaryPropertyDisplayValue = (product) => {
+  const value = getSecondaryPropertyValue(product);
+  if (value) return value;
+
+  return product?.secondary_property ? "" : product?.textColor ?? "";
+};
+
+export const formatPropertyContextValue = (context, value) => {
+  if (!value) return "";
+
+  return context?.toLowerCase().includes("стель")
+    ? `${value} см`
+    : String(value);
+};
+
 export const getArticleWithoutSize = (product) => {
   const article = getArticle(product);
 
@@ -55,13 +93,21 @@ export const getArticleWithoutSize = (product) => {
   return article;
 };
 
+export const getSecondaryPropertyKey = (product) => {
+  const secondaryId = product?.secondary_property?.id;
+  if (secondaryId) return String(secondaryId);
+  if (product?.color) return String(product.color);
+
+  return getArticleWithoutSize(product);
+};
+
 export const getGroupKey = (product) => {
   const modelId = getModelId(product);
-  const articleWithoutSize = getArticleWithoutSize(product);
+  const secondaryPropertyKey = getSecondaryPropertyKey(product);
 
-  if (modelId && articleWithoutSize) return `${modelId}-${articleWithoutSize}`;
+  if (modelId && secondaryPropertyKey) return `${modelId}-${secondaryPropertyKey}`;
   if (modelId) return modelId;
-  if (articleWithoutSize) return articleWithoutSize;
+  if (secondaryPropertyKey) return secondaryPropertyKey;
 
   return String(product?.id);
 };
@@ -82,7 +128,7 @@ export const getQuantitySteps = (product) =>
   );
 
 export const isRshzEnabled = (product) => {
-  return Boolean(product.primary_price != "retail" ?? false);
+  return Boolean(product.primary_price !== "retail" ?? false);
 };
 
 export const getPrice = (product) => {
@@ -145,11 +191,13 @@ function ProductCard({ products = [] }) {
     });
 
     return Array.from(uniqueById.values()).sort((a, b) => {
-      const sizeA = Number(getSize(a));
-      const sizeB = Number(getSize(b));
+      const sizeA = Number(getPrimaryPropertyOptionValue(a));
+      const sizeB = Number(getPrimaryPropertyOptionValue(b));
 
       if (Number.isNaN(sizeA) || Number.isNaN(sizeB)) {
-        return String(getSize(a)).localeCompare(String(getSize(b)));
+        return String(getPrimaryPropertyOptionValue(a)).localeCompare(
+          String(getPrimaryPropertyOptionValue(b))
+        );
       }
 
       return sizeA - sizeB;
@@ -276,7 +324,7 @@ function ProductCard({ products = [] }) {
       <div className="product-sizes">
         {variants.length > 1 &&
           variants.map((variant) => {
-            const size = getSize(variant);
+            const size = getPrimaryPropertyOptionValue(variant);
             const variantInCart = cartData.some(
               (item) => item.id === variant.id
             );
@@ -298,6 +346,7 @@ function ProductCard({ products = [] }) {
                   .filter(Boolean)
                   .join(" ")}
                 onClick={() => setSelectedProductId(variant.id)}
+                title={`${getPrimaryPropertyLabel(variant)}: ${size}`}
               >
                 {size}
               </button>
