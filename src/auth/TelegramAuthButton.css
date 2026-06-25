@@ -1,0 +1,60 @@
+.telegram-auth-button {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 320px;
+  position: relative;
+  width: 100%;
+}
+
+.telegram-auth-button button {
+  align-items: center;
+  background: var(--appearance-active-main-button-background-color);
+  border: 0;
+  border-radius: 8px;
+  color: var(--appearance-active-main-button-text-color);
+  display: flex;
+  font-size: 16px;
+  font-weight: 600;
+  height: 48px;
+  justify-content: center;
+  line-height: 1.2;
+  padding: 0 18px;
+  transition: opacity 0.2s ease;
+  width: 100%;
+}
+
+.telegram-auth-button button:disabled {
+  background: var(--appearance-disable-button-background-color);
+  color: var(--appearance-disable-button-text-color);
+  cursor: default;
+  opacity: 0.7;
+}
+
+.telegram-auth-widget-layer {
+  inset: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.telegram-auth-button.ready .telegram-auth-widget-layer {
+  pointer-events: auto;
+}
+
+.telegram-auth-widget-layer iframe {
+  border: 0 !important;
+  height: 48px !important;
+  inset: 0;
+  opacity: 0.01;
+  position: absolute;
+  width: 100% !important;
+}
+
+.telegram-auth-status {
+  color: var(--appearance-secondary-text-color);
+  font-size: 13px;
+  line-height: 1.35;
+  margin: 0;
+  text-align: center;
+}

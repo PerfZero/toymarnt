@@ -1216,3 +1216,61 @@
   background: var(--appearance-product-card-quantity-background-color);
   color: var(--appearance-product-card-quantity-text-color);
 }
+
+.cart-auth-modal {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.62);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 1200;
+}
+
+.cart-auth-dialog {
+  align-items: center;
+  background: var(--appearance-info-blocks-background-color);
+  border-radius: 8px;
+  color: var(--appearance-main-text-color);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 420px;
+  padding: 28px 20px 22px;
+  position: relative;
+  text-align: center;
+  width: 100%;
+}
+
+.cart-auth-dialog h3 {
+  color: var(--appearance-main-text-color);
+  font-size: 24px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.cart-auth-dialog p {
+  color: var(--appearance-secondary-text-color);
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.cart-auth-close {
+  align-items: center;
+  background: var(--appearance-service-button-background-color);
+  border: 0;
+  border-radius: 50%;
+  color: var(--appearance-service-button-text-color);
+  display: flex;
+  font-size: 24px;
+  height: 36px;
+  justify-content: center;
+  line-height: 1;
+  padding: 0 0 2px;
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 36px;
+}

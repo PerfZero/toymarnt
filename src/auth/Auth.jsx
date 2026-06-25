@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import logo from "../img/logo.png";
-import { LoginButton } from "@telegram-auth/react";
+import { TelegramAuthButton } from "./TelegramAuthButton";
 import "./auth.css";
 
 const AuthTelegram = () => {
@@ -23,13 +23,8 @@ const AuthTelegram = () => {
         </div>
 
         <main className="telegram-wrapper">
-          <LoginButton
-            botUsername="toymarket_bot"
-            buttonSize="large"
-            cornerRadius={5}
-            showAvatar={false}
-            lang="ru"
-            onAuthCallback={(data) => {
+          <TelegramAuthButton
+            onAuth={(data) => {
               localStorage.setItem("user", JSON.stringify(data));
               navigate(redirectTo);
             }}

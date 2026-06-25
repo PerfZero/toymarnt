@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setCart, setUserInfo } from "../../context/cartSlice";
 import { FaMinus, FaPlus } from "react-icons/fa";
@@ -24,6 +24,7 @@ import { FaChevronLeft } from "react-icons/fa6";
 import { useGetPickupPointsQuery } from "../../context/service/productsApi";
 import { useGoBackOrHome } from "../../utils/goBackOrHome";
 import { getModelId } from "../../components/catalog/ProductCard";
+import { TelegramAuthButton } from "../../auth/TelegramAuthButton";
 
 const getCartPayload = (response) =>
   response?.data?.data ?? response?.data ?? response;
@@ -119,7 +120,6 @@ const normalizeCartItem = (item) => {
 
 const NewCart = () => {
   const nav = useNavigate();
-  const location = useLocation();
   const dispatch = useDispatch();
   const back = useGoBackOrHome();
   const hasLoadedServerCart = useRef(false);
@@ -129,8 +129,9 @@ const NewCart = () => {
 
   const cart = useSelector((state) => state.cart.items);
   const reduxUserInfo = useSelector((state) => state.cart.userInfo);
+  const [authUser, setAuthUser] = useState(() => localStorage.getItem("user"));
   const isAuthorized =
-    Boolean(localStorage.getItem("user")) ||
+    Boolean(authUser) ||
     Boolean(window.Telegram?.WebApp?.initData);
 
   const [deliveryData, setDeliveryData] = useState("pickup");
@@ -149,21 +150,18 @@ const NewCart = () => {
 
   const [paymentDelivered, setPaymentDelivered] = useState(true);
   const [modal1, setModal1] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [selectedPickupId, setSelectedPickupId] = useState(null);
   const [selectedPickup, setSelectedPickup] = useState(null);
   const [selectedPickupName, setSelectedPickupName] = useState("Не выбран");
 
-  const redirectToAuth = useCallback(() => {
-    nav(
-      `/auth?redirect=${encodeURIComponent(
-        location.pathname + location.search
-      )}`
-    );
-  }, [location.pathname, location.search, nav]);
+  const openAuthModal = useCallback(() => {
+    setIsAuthModalOpen(true);
+  }, []);
 
   const ensureAuthorized = useCallback(async () => {
     if (!isAuthorized) {
-      redirectToAuth();
+      openAuthModal();
       return false;
     }
 
@@ -174,12 +172,36 @@ const NewCart = () => {
       return true;
     }
 
+    setAuthUser(null);
+
     if (!window.Telegram?.WebApp?.initData) {
-      redirectToAuth();
+      openAuthModal();
     }
 
     return false;
-  }, [dispatch, isAuthorized, redirectToAuth]);
+  }, [dispatch, isAuthorized, openAuthModal]);
+
+  const handleTelegramAuth = useCallback(
+    async (authData) => {
+      const serializedUser = JSON.stringify(authData);
+
+      localStorage.setItem("user", serializedUser);
+      setAuthUser(serializedUser);
+
+      const userData = await getToken();
+
+      if (userData) {
+        dispatch(setUserInfo(userData));
+        setIsAuthModalOpen(false);
+        setOpenTotalBlock(true);
+        window.scrollTo(0, 0);
+        return;
+      }
+
+      setAuthUser(null);
+    },
+    [dispatch]
+  );
 
   const selectedItems = useMemo(
     () => cart.filter((item) => selectedIds.includes(item.id)),
@@ -940,6 +962,34 @@ const NewCart = () => {
               <span>{isAuthorized ? "К оформлению" : "Войти для оформления"}</span>
               <p>на {formatNumber(totalPrice)} ₽</p>
             </a>
+          </div>
+        )}
+
+        {isAuthModalOpen && (
+          <div
+            className="cart-auth-modal"
+            onClick={() => setIsAuthModalOpen(false)}
+          >
+            <div
+              className="cart-auth-dialog"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="cart-auth-close"
+                onClick={() => setIsAuthModalOpen(false)}
+                aria-label="Закрыть"
+              >
+                ×
+              </button>
+
+              <h3>Вход для оформления</h3>
+              <p>
+                Авторизуйтесь через Telegram, чтобы перейти к оформлению заказа.
+              </p>
+
+              <TelegramAuthButton onAuth={handleTelegramAuth} />
+            </div>
           </div>
         )}
       </div>
