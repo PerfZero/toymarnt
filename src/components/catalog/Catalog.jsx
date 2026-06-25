@@ -12,7 +12,7 @@ import { FreeMode } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import ProductCard, { getGroupKey, canShowGroup } from "./ProductCard";
 
-const HOME_SECTION_PRODUCT_LIMIT = 80;
+const HOME_SECTION_PRODUCT_LIMIT = 50;
 
 const groupProducts = (items = []) => {
   const groups = new Map();
@@ -124,7 +124,7 @@ function LazyCategorySection({ category }) {
       .unwrap()
       .then((productsData) => {
         if (isMounted) {
-          setProducts(productsData || []);
+          setProducts(Array.isArray(productsData) ? productsData : []);
         }
       })
       .catch((err) => {
