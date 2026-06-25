@@ -222,21 +222,28 @@ body.telegram-webapp .modal1 {
 }
 
 .card-count-number {
-    aspect-ratio: 1;
     background-color: var(--appearance-active-main-button-background-color);
     color: var(--appearance-active-main-button-text-color);
-    font-size: 14px;
-    min-height: 19px;
+    font-size: 12px;
+    height: 20px;
     border-radius: 50% !important;
-    min-width: 19px;
-    padding: 4px;
+    min-height: 20px;
+    min-width: 20px;
+    padding: 0;
     position: absolute;
     right: -5px;
     text-align: center;
     top: -5px;
+    width: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
+    line-height: 1;
+}
+
+.card-count-number p {
+    line-height: 1;
+    margin: 0;
 }
 
 .mobileSearchIcon {

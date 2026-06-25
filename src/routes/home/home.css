@@ -3,13 +3,14 @@
   background-color: #fff;
   background-color: #2a2a2a;
   border-radius: 14px 14px 0 0;
-  bottom: 75px;
+  bottom: calc(var(--mobile-bottom-bar-height) + var(--mobile-bottom-bar-gap));
   box-shadow: none;
   box-shadow: 0 -6px 16px -16px #ababab;
   color: #fff;
+  display: flex;
   flex-wrap: wrap;
   font-size: 13px;
-  justify-content: space-between;
+  justify-content: center;
   left: 0;
   margin: -1px auto;
   max-width: 480px;
@@ -24,11 +25,14 @@
   z-index: 101;
 }
 
-.go-to-order-wrap {
-  bottom: 0;
-}
 @media screen and (max-width: 1024px) {
   .go-to-order-wrap {
-    bottom: 80px;
+    bottom: calc(var(--mobile-bottom-bar-height) + var(--mobile-bottom-bar-gap));
+  }
+
+  body.telegram-webapp .go-to-order-wrap {
+    bottom: calc(
+      var(--mobile-bottom-bar-height) + var(--mobile-bottom-bar-gap) + var(--tg-safe-area-inset-bottom)
+    );
   }
 }
